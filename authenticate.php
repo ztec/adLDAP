@@ -8,7 +8,7 @@ if ($lg=="yes"){ //destroy the session
 }
 
 //force the browser to use ssl (STRONGLY RECOMMENDED!!!!!!!!)
-if ($_SERVER["SERVER_PORT"]!=443){ header("Location: https://".$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF']); exit; }
+if ($_SERVER["SERVER_PORT"]!=443){ header("Location: https://".$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF']); exit(); }
 
 $user=strtoupper($_POST["user"]); //remove case sensitivity on the username
 $pass=$_POST["pass"];

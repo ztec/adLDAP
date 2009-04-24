@@ -1,29 +1,56 @@
-<?
+<?php
 /*
-LDAP FUNCTIONS FOR MANIPULATING ACTIVE DIRECTORY
-Version 1.0 BETA
+	LDAP FUNCTIONS FOR MANIPULATING ACTIVE DIRECTORY
+	Version 1.1
 
-Written by Scott Barnett
-email: scott@wiggumworld.com
-http://adldap.sourceforge.net/
+	Maintained by Scott Barnett
+	email: scott@wiggumworld.com
+	http://adldap.sourceforge.net/
 
-I'd appreciate any improvements or additions to be submitted back
-to benefit the entire community :)
+	Written for PHP 4, should still work fine on PHP 5.
 
-Written for PHP 4, should still work fine on PHP 5.
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License, or
+	(at your option) any later version.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+	FUNCTIONS:
+		
+	authenticate($username,$password)
+	Authenticate to the directory with a specific username and password
+	
+	user_info($user,$fields=NULL)
+	Returns an array of information for a specific user
+
+	user_groups($user)
+	Returns an array of groups that a user is a member off
+
+	user_ingroup($user,$group)
+	Returns true if the user is a member of the group
+	
+	all_users($include_desc = false, $search = "*", $sorted = true)
+	Returns all AD users
+	
+	all_groups($include_desc = false, $search = "*", $sorted = true)
+	Returns all AD groups
+
 */
 
-class adLDAP{
+// Different type of accounts in AD
+define ('ADLDAP_NORMAL_ACCOUNT', 805306368);
+define ('ADLDAP_WORKSTATION_TRUST', 805306369);
+define ('ADLDAP_INTERDOMAIN_TRUST', 805306370);
+define ('ADLDAP_SECURITY_GLOBAL_GROUP', 268435456);
+define ('ADLDAP_DISTRIBUTION_GROUP', 268435457);
+define ('ADLDAP_SECURITY_LOCAL_GROUP', 536870912);
+define ('ADLDAP_DISTRIBUTION_LOCAL_GROUP', 536870913);
+
+class adLDAP {
 
 	// You will need to edit these variables to suit your installation
 	var $_account_suffix="@mydomain.local";
@@ -31,23 +58,9 @@ class adLDAP{
 	
 	// An array of domain controllers. Specify multiple controllers if you 
 	// would like the class to balance the LDAP queries amongst multiple servers
-	var $_domain_controllers = array ("domaincontroller.mydomain.local");
+	var $_domain_controllers = array ("dc.mydomain.local");
 	
 	// specify account for searching
-	/*
-	There is a problem with Active Directory that some queries may cause
-	it to crash (yahhh Microsoft!). It's a bug, I've informed them in detail
-	of the bug, and I guess it's up to them to fix it. If your domain controller
-	crashes, try a Domain Admin account for searches. Make sure you take
-	acceptable security precautions if you choose to use this. DO NOT LEAVE
-	THIS SCRIPT ON AN OPEN SAMBA SHARE IF YOU ENABLE THIS OPTION!!!
-	
-	NOTE: I personally would definately not recommend using a domain admin account
-	in production. This is here to assist troubleshooting.
-	
-	You can also use this to specify another account with slightly more
-	permissions to use for searches should the need arise.
-	*/
 	var $_ad_username=NULL;
 	var $_ad_password=NULL;
 	
@@ -56,43 +69,17 @@ class adLDAP{
 	var $_user_pass;
 	var $_conn;
 	var $_bind; 
-	
-	//METHODS
-	
-	// authenticate($username,$password)
-	//	Authenticate to the directory with a specific username and password
-	//	Extremely useful for validating login credentials
-
-	// user_info($user,$fields)
-	//	Returns an array of information for a specific user
-	
-	// user_groups($user)
-	//	Returns an array of groups that a user is a member off
-	
-	// user_ingroup($user,$group)
-	//	Returns true if the user is a member of the group
-	
-	// rebind()
-	//	Binds to the directory with the default search username and password
-	//	specified above.
-	
-
-	//You should not need to edit anything below this line
-	//This is an open source project, please submit your improvements :)
-	//************************************************************************
 
 	// default constructor
 	function adLDAP(){
 		//connect to the LDAP server as the username/password
-		$this->_conn = ldap_connect($this->random_controller()); 
+		$this->_conn = ldap_connect($this->random_controller());
 		ldap_set_option($this->_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
 		return true;
 	}
 
-	// destructor not implemented until PHP5
-	//function __destruct(){
-	//	ldap_close ($_conn);
-	//}
+	//destructor not implemented until PHP5
+	function __destruct(){ ldap_close ($this->_conn); }
 
 	function random_controller(){
 		//select a random domain controller
@@ -101,49 +88,53 @@ class adLDAP{
 		$rand--;
 		return $this->_domain_controllers[$rand];
 	}
-	
+
+	// authenticate($username,$password)
+	//	Authenticate to the directory with a specific username and password
+	//	Extremely useful for validating login credentials
 	function authenticate($username,$password){
 		//validate a users login credentials
-
 		$returnval=false;
 		
-		if ($username!=NULL){ //prevent null bind
+		if ($username!=NULL) //prevent null bind
+		{
 			$this->_user_dn=$username.$this->_account_suffix;
 			$this->_user_pass=$password;
 			
 			$this->_bind = @ldap_bind($this->_conn,$this->_user_dn,$this->_user_pass);
-			if ($this->_bind){ $returnval=true; }
+			if ($this->_bind)
+				$returnval=true;
 		}
 		return $returnval;
 	}
 	
+	// rebind()
+	//	Binds to the directory with the default search username and password
+	//	specified above.
 	function rebind(){
 		//connect with another account to search with if necessary
 		$ad_dn=$this->_ad_username.$this->_account_suffix;
 		$this->_bind = @ldap_bind($this->_conn,$ad_dn,$this->_ad_password);
-		if ($this->_bind){
-			return true; 
-		} else {
-			return false;
-		}
+		if ($this->_bind){ return true; }
+		return false;
 	}
 
-	function user_info($user,$fields){
-		//search the directory for a user and return an array of user information
-
+	// user_info($user,$fields)
+	//	Returns an array of information for a specific user
+	function user_info($user,$fields=NULL){
 		if ($user!=NULL){
-			//bind as a another account if necessary
-			if ($this->_ad_username!=NULL){ $this->rebind(); }
+			if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
 			
-			if ($this->_bind){
-			
-				//perform the search and grab all their details
+			if ($this->_bind){ //perform the search and grab all their details
 				$filter="samaccountname=".$user;
-				if ($fields==NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber"); }
-				//echo ($this->_conn.",".$this->_base_dn.",".$filter.",".$fields);
+				if ($fields==NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid"); }
 				$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 				$entries = ldap_get_entries($this->_conn, $sr);
-			
+
+				// AD does not return the primary group in the ldap query, we need to fudge it
+				$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+				$entries[0]["memberof"]["count"]++;
+
 				return $entries;
 			}
 		}
@@ -151,19 +142,19 @@ class adLDAP{
 		return false;
 	}
 	
+	// user_groups($user)
+	//	Returns an array of groups that a user is a member off
 	function user_groups($user){
-		//return an array of the groups the user is in
-		
-		if ($this->_ad_username!=NULL){ $this->rebind(); }
+		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
 		
 		if ($this->_bind){
 			//search the directory for their information
-			$info=@$this->user_info($user,array("memberof"));
-			
-			//presuming the entry returned is our guy (unique usernames)
-			$groups=$info[0][memberof];
+			$info=@$this->user_info($user,array("memberof","primarygroupid"));
+			//echo ("<pre>\n"); print_r($info); echo ("</pre>\n");
+			$groups=$info[0][memberof]; //presuming the entry returned is our guy (unique usernames)
 			
 			$group_array=array();
+			
 			for ($i=0; $i<$groups["count"]; $i++){ //for each group
 				$line=$groups[$i];
 				
@@ -179,18 +170,18 @@ class adLDAP{
 						$group_name.=$line[$j];
 					}
 				}
-				$group_array[$i]=$group_name;
+				$group_array[$i] = $group_name;
 			}
 			return $group_array;
-		} else {
-			return false;	
 		}
+		return false;	
 	}
 
+	// user_ingroup($user,$group)
+	//	Returns true if the user is a member of the group
 	function user_ingroup($user,$group){
-	
 		if (($user!=NULL) && ($group!=NULL)){
-			if ($this->_ad_username!=NULL){ $this->rebind(); }
+			if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
 
 			if ($this->_bind){
 				$groups=$this->user_groups($user,array("memberof"));
@@ -199,5 +190,94 @@ class adLDAP{
 		}
 		return false;
 	}
-}
+	
+	function group_cn($gid){
+		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
+		
+		// coping with AD not returning the primary group
+		// http://support.microsoft.com/?kbid=321360
+		// for some reason it's not possible to search on primarygrouptoken=XXX
+		// if someone can show otherwise, I'd like to know about it :)
+		// this way is resource intensive and generally a pain in the @#%^
+		
+		$r=false;
+		
+		if ($this->_bind){
+			$filter="(&(objectCategory=group)(samaccounttype=". ADLDAP_SECURITY_GLOBAL_GROUP ."))";
+			$fields=array("primarygrouptoken","samaccountname","distinguishedname");
+			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
+			$entries = ldap_get_entries($this->_conn, $sr);
+			//echo ("<pre>"); print_r($entries); echo ("</pre>");
+			
+			for ($i=0; $i<$entries["count"]; $i++){
+				if ($entries[$i]["primarygrouptoken"][0]==$gid){
+					$r=$entries[$i]["distinguishedname"][0];
+					$i=$entries["count"];
+				}
+			}
+		}
+		return $r;
+	}
+	
+	
+	function all_users($include_desc = false, $search = "*", $sorted = true){
+		// Returns all AD users
+		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
+		
+		if ($this->_bind)
+		{
+			$users_array = array();
+		
+			//perform the search and grab all their details
+			$filter = "(&(objectClass=user)(samaccounttype=". ADLDAP_NORMAL_ACCOUNT .")(objectCategory=person)(cn=$search))";
+			$fields=array("samaccountname","displayname");
+			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
+			$entries = ldap_get_entries($this->_conn, $sr);
+		
+			for ($i=0; $i<$entries["count"]; $i++)
+			{
+				if( $include_desc && strlen($entries[$i]["displayname"][0]) > 0 )
+					$users_array[ $entries[$i]["samaccountname"][0] ] = $entries[$i]["displayname"][0];
+				else if( $include_desc )
+					$users_array[ $entries[$i]["samaccountname"][0] ] = $entries[$i]["samaccountname"][0];
+				else
+					array_push($users_array, $entries[$i]["samaccountname"][0]);
+			}
+			if( $sorted )
+				asort($users_array);
+			return $users_array;
+		}
+		return false;
+	}
+	
+	function all_groups($include_desc = false, $search = "*", $sorted = true){
+		// Returns all AD groups
+		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
+		
+		if ($this->_bind){
+			$groups_array = array();
+		
+			//perform the search and grab all their details
+			$filter = "(&(objectCategory=group)(samaccounttype=". ADLDAP_SECURITY_GLOBAL_GROUP .")(cn=$search))";
+			$fields=array("samaccountname","description");
+			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
+			$entries = ldap_get_entries($this->_conn, $sr);
+			
+			for ($i=0; $i<$entries["count"]; $i++)
+			{
+				if( $include_desc && strlen($entries[$i]["description"][0]) > 0 )
+					$groups_array[ $entries[$i]["samaccountname"][0] ] = $entries[$i]["description"][0];
+				else if( $include_desc )
+					$groups_array[ $entries[$i]["samaccountname"][0] ] = $entries[$i]["samaccountname"][0];
+				else
+					array_push($groups_array, $entries[$i]["samaccountname"][0]);
+			}
+			if( $sorted )
+				asort($groups_array);
+			return $groups_array;
+		}
+		return false;
+	}
+} // End class
+
 ?>

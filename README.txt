@@ -1,5 +1,5 @@
 LDAP FUNCTIONS FOR MANIPULATING ACTIVE DIRECTORY
-Version 1.0 BETA
+Version 1.1
 
 Written by Scott Barnett
 email: scott@wiggumworld.com
