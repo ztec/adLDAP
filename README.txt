@@ -1,5 +1,5 @@
 PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY
-Version 1.2
+Version 1.3
 
 Written by Scott Barnett
 email: scott@wiggumworld.com

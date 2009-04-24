@@ -1,7 +1,7 @@
 <?php
 /*
 	LDAP FUNCTIONS FOR MANIPULATING ACTIVE DIRECTORY
-	Version 1.2
+	Version 1.3
 
 	Maintained by Scott Barnett
 	email: scott@wiggumworld.com
@@ -66,7 +66,7 @@ class adLDAP {
 	// would like the class to balance the LDAP queries amongst multiple servers
 	var $_domain_controllers = array ("dc.mydomain.local");
 	
-	// specify account for searching
+	// optional account for searching
 	var $_ad_username=NULL;
 	var $_ad_password=NULL;
 	
@@ -108,8 +108,7 @@ class adLDAP {
 		//validate a users login credentials
 		$returnval=false;
 		
-		if ($username!=NULL) //prevent null bind
-		{
+		if ($username!=NULL && $password!=NULL){ //prevent null bind
 			$this->_user_dn=$username.$this->_account_suffix;
 			$this->_user_pass=$password;
 			
@@ -185,6 +184,7 @@ class adLDAP {
 					} else {
 						$group_name.=$line[$j];
 					}
+
 				}
 				$group_array[$i] = $group_name;
 			}
@@ -240,8 +240,7 @@ class adLDAP {
 		// Returns all AD users
 		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
 		
-		if ($this->_bind)
-		{
+		if ($this->_bind){
 			$users_array = array();
 		
 			//perform the search and grab all their details
@@ -250,8 +249,7 @@ class adLDAP {
 			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 			$entries = ldap_get_entries($this->_conn, $sr);
 		
-			for ($i=0; $i<$entries["count"]; $i++)
-			{
+			for ($i=0; $i<$entries["count"]; $i++){
 				if( $include_desc && strlen($entries[$i]["displayname"][0]) > 0 )
 					$users_array[ $entries[$i]["samaccountname"][0] ] = $entries[$i]["displayname"][0];
 				else if( $include_desc )
@@ -279,8 +277,7 @@ class adLDAP {
 			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 			$entries = ldap_get_entries($this->_conn, $sr);
 			
-			for ($i=0; $i<$entries["count"]; $i++)
-			{
+			for ($i=0; $i<$entries["count"]; $i++){
 				if( $include_desc && strlen($entries[$i]["description"][0]) > 0 )
 					$groups_array[ $entries[$i]["samaccountname"][0] ] = $entries[$i]["description"][0];
 				else if( $include_desc )
@@ -288,8 +285,7 @@ class adLDAP {
 				else
 					array_push($groups_array, $entries[$i]["samaccountname"][0]);
 			}
-			if( $sorted )
-				asort($groups_array);
+			if( $sorted ){ asort($groups_array); }
 			return $groups_array;
 		}
 		return false;
