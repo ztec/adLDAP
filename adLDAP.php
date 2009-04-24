@@ -1,18 +1,18 @@
 <?php
 /*
 	PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY
-	Version 2.0
+	Version 2.1
 	
 	Written by Scott Barnett
 	email: scott@wiggumworld.com
 	http://adldap.sourceforge.net/
 	
-	Copyright (C) 2006 Scott Barnett
+	Copyright (C) 2006-2007 Scott Barnett
 	
 	I'd appreciate any improvements or additions to be submitted back
 	to benefit the entire community :)
 	
-	Works with both PHP 4 and PHP 5
+	Works with PHP 5, should be fine with PHP 4, let me know if/where it doesn't :)
 	
 	Please visit the project website for a full list of the functions and
 	documentation on using them.
@@ -145,15 +145,18 @@ class adLDAP {
 		return (true);
 	}
 
+	//*****************************************************************************************************************
+	// GROUP FUNCTIONS
+
 	// Add a group to a group
 	function group_add_group($parent,$child){
 
-		//find the user's dn
+		//find the parent group's dn
 		$parent_group=$this->group_info($parent,array("cn"));
 		if ($parent_group[0]["dn"]==NULL){ return (false); }
 		$parent_dn=$parent_group[0]["dn"];
 		
-		//find the group's dn
+		//find the child group's dn
 		$child_group=$this->group_info($child,array("cn"));
 		if ($child_group[0]["dn"]==NULL){ return (false); }
 		$child_dn=$child_group[0]["dn"];
@@ -167,19 +170,19 @@ class adLDAP {
 	}
 	
 	// Add a user to a group
-	function group_add_user($group_name,$username){
+	function group_add_user($group,$user){
 		//adding a user is a bit fiddly, we need to get the full DN of the user
 		//and add it using the full DN of the group
 		
 		//find the user's dn
-		$user=$this->user_info($username,array("cn"));
-		if ($user[0]["dn"]==NULL){ return (false); }
-		$user_dn=$user[0]["dn"];
+		$user_info=$this->user_info($user,array("cn"));
+		if ($user_info[0]["dn"]==NULL){ return (false); }
+		$user_dn=$user_info[0]["dn"];
 		
 		//find the group's dn
-		$group=$this->group_info($group_name,array("cn"));
-		if ($group[0]["dn"]==NULL){ return (false); }
-		$group_dn=$group[0]["dn"];
+		$group_info=$this->group_info($group,array("cn"));
+		if ($group_info[0]["dn"]==NULL){ return (false); }
+		$group_dn=$group_info[0]["dn"];
 		
 		$add=array();
 		$add["member"] = $user_dn;
@@ -207,7 +210,7 @@ class adLDAP {
 		$add["samaccountname"] = $attributes["group_name"];
 		$add["objectClass"] = "Group";
 		$add["description"] = $attributes["description"];
-		//$ad["member"] = $member_array; UNTESTED
+		//$add["member"] = $member_array; UNTESTED
 
 		$container="OU=".implode(",OU=",$attributes["container"]);
 		$result=ldap_add($this->_conn,"CN=".$add["cn"].", ".$container.",".$this->_base_dn,$add);
@@ -215,25 +218,87 @@ class adLDAP {
 		
 		return (true);
 	}
+
+	// Remove a group from a group
+	function group_del_group($parent,$child){
+	
+		//find the parent dn
+		$parent_group=$this->group_info($parent,array("cn"));
+		if ($parent_group[0]["dn"]==NULL){ return (false); }
+		$parent_dn=$parent_group[0]["dn"];
+		
+		//find the child dn
+		$child_group=$this->group_info($child,array("cn"));
+		if ($child_group[0]["dn"]==NULL){ return (false); }
+		$child_dn=$child_group[0]["dn"];
+		
+		$del=array();
+		$del["member"] = $child_dn;
+		
+		$result=@ldap_mod_del($this->_conn,$parent_dn,$del);
+		if ($result==false){ return (false); }
+		return (true);
+	}
+	
+	// Remove a user from a group
+	function group_del_user($group,$user){
+	
+		//find the parent dn
+		$group_info=$this->group_info($group,array("cn"));
+		if ($group_info[0]["dn"]==NULL){ return (false); }
+		$group_dn=$group_info[0]["dn"];
+		
+		//find the child dn
+		$user_info=$this->user_info($user,array("cn"));
+		if ($user_info[0]["dn"]==NULL){ return (false); }
+		$user_dn=$user_info[0]["dn"];
+
+		$del=array();
+		$del["member"] = $user_dn;
+		
+		$result=@ldap_mod_del($this->_conn,$group_dn,$del);
+		if ($result==false){ return (false); }
+		return (true);
+	}
 	
 	// Returns an array of information for a specified group
 	function group_info($group_name,$fields=NULL){
 		if ($group_name==NULL){ return (false); }
 		if (!$this->_bind){ return (false); }
-
-		//escape nasty characters
-		$group_name=str_replace("(","\(",$group_name);
-		$group_name=str_replace(")","\)",$group_name);
-		$group_name=str_replace("#","\#",$group_name);
 		
-		$filter="(&(objectCategory=group)(name=".$group_name."))";
-		//echo ($filter."<br>");
+		$filter="(&(objectCategory=group)(name=".$this->ldap_slashes($group_name)."))";
+		//echo ($filter."!!!<br>");
 		if ($fields==NULL){ $fields=array("member","memberof","cn","description","distinguishedname","objectcategory","samaccountname"); }
 		$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 		$entries = ldap_get_entries($this->_conn, $sr);
 		//print_r($entries);
 		return ($entries);
 	}
+	
+	// Retun a complete list of "groups in groups"	
+	function recursive_groups($group){
+		if ($group==NULL){ return (false); }
+
+		$ret_groups=array();
+		
+		$groups=$this->group_info($group,array("memberof"));
+		$groups=$groups[0]["memberof"];
+
+		if ($groups){
+			$group_names=$this->nice_names($groups);
+			$ret_groups=array_merge($ret_groups,$group_names); //final groups to return
+			
+			foreach ($group_names as $id => $group_name){
+				$child_groups=$this->recursive_groups($group_name);
+				$ret_groups=array_merge($ret_groups,$child_groups);
+			}
+		}
+
+		return ($ret_groups);
+	}
+	
+	//*****************************************************************************************************************
+	// USER FUNCTIONS
 
 	//create a user
 	function user_create($attributes){
@@ -247,46 +312,31 @@ class adLDAP {
 
 		if (array_key_exists("password",$attributes) && !$this->_use_ssl){ echo ("FATAL: SSL must be configured on your webserver and enabled in the class to set passwords."); exit(); }
 
-		$attributes["container"]=array_reverse($attributes["container"]);
-		$add=array();
+		if (!array_key_exists("display_name",$attributes)){ $attributes["display_name"]=$attributes["firstname"]." ".$attributes["surname"]; }
+
+		//translate the schema
+		$add=$this->adldap_schema($attributes);
 		
-		//compulsory fields
-		$add["cn"][0]=$attributes["firstname"]." ".$attributes["surname"];
+		//additional stuff only used for adding accounts
+		$add["cn"][0]=$attributes["display_name"];
 		$add["samaccountname"][0]=$attributes["username"];
 		$add["objectclass"][0]="top";
 		$add["objectclass"][1]="person";
 		$add["objectclass"][2]="organizationalPerson";
 		$add["objectclass"][3]="user"; //person?
-		$add["displayname"][0]=$attributes["firstname"]." ".$attributes["surname"];
-		$add["name"][0]=$attributes["firstname"]." ".$attributes["surname"];
-		$add["givenname"][0]=$attributes["firstname"];
-		$add["sn"][0]=$attributes["surname"];
-		$add["company"][0]=$attributes["company"];
-		$add["mail"][0]=$attributes["email"];
-		
+		//$add["name"][0]=$attributes["firstname"]." ".$attributes["surname"];
+
 		//set the account control attribute
 		$control_options=array("NORMAL_ACCOUNT");
-		if ($attributes["disable"]){ $control_options[]="ACCOUNTDISABLE"; }
-		
-		//optional fields (ldap doesn't like NULL attributes, only set them if they have values)
-		if ($attributes["change_password"]){ $add["pwdLastSet"][0]=0; }
-		if ($attributes["department"]){ $add["department"][0] = $attributes["department"]; }
-		if ($attributes["description"]){ $add["description"][0] = $attributes["description"]; }
-		if ($attributes["enabled"]){ $add["userAccountControl"][0]=$this->account_control($control_options); }
-		if ($attributes["expires"]){ $add["accountExpires"][0]=$attributes["accountExpires"]; } //unix epoch format?
-		//if ($attribute["home_directory"]){ $add["homeDirectory"][0]=$attribute["homeDirectory"]; } //UNTESTED
-		if ($attributes["initials"]){ $add["initials"][0] = $attributes["initials"]; }
-		if ($attributes["logon_name"]){ $add["userPrincipalName"][0]=$attributes["logon_name"]; }
-		//if ($attributes["manager"]){ $add["manager"][0]=$attributes["manager"]; }  //UNTESTED ***Use DistinguishedName***
-		if ($attributes["password"]){ $add["unicodePwd"][0]=$this->encode_password($attributes["password"]); }
-		//if ($attributes["profile_path"]){ $add["profilePath"][0]=$attributes["profile_path"]; } //UNTESTED
-		//if ($attributes["script_path"]){ $add["scriptPath"][0]=$attributes["script_path"]; } //UNTESTED
-		if ($attributes["title"]){ $add["title"][0]=$attributes["title"]; }
+		if (!$attributes["enabled"]){ $control_options[]="ACCOUNTDISABLE"; }
+		$add["userAccountControl"][0]=$this->account_control($control_options);
 		//echo ("<pre>"); print_r($add);
-		
-		//add the entry
+
+		//determine the container
+		$attributes["container"]=array_reverse($attributes["container"]);
 		$container="OU=".implode(",OU=",$attributes["container"]);
 
+		//add the entry
 		$result=@ldap_add($this->_conn, "CN=".$add["cn"][0].", ".$container.",".$this->_base_dn, $add);
 		if ($result!=true){ return (false); }
 		
@@ -355,55 +405,29 @@ class adLDAP {
 	function user_modify($username,$attributes){
 		if ($username==NULL){ return ("Missing compulsory field [username]"); }
 		if (array_key_exists("password",$attributes) && !$this->_use_ssl){ echo ("FATAL: SSL must be configured on your webserver and enabled in the class to set passwords."); exit(); }
-		if (array_key_exists("container",$attributes)){
-			if (!is_array($attributes["container"])){ return ("Container attribute must be an array."); }
-			$attributes["container"]=array_reverse($attributes["container"]);
-		}
+		//if (array_key_exists("container",$attributes)){
+			//if (!is_array($attributes["container"])){ return ("Container attribute must be an array."); }
+			//$attributes["container"]=array_reverse($attributes["container"]);
+		//}
 
 		//find the dn of the user
 		$user=$this->user_info($username,array("cn"));
 		if ($user[0]["dn"]==NULL){ return (false); }
 		$user_dn=$user[0]["dn"];
+
+		//translate the update to the LDAP schema				
+		$mod=$this->adldap_schema($attributes);
+		if (!$mod){ return (false); }
 		
-		$mod=array();
-		
-		// modifying a name is a bit fiddly
-		if ($attributes["firstname"] && $attributes["surname"]){
-			$mod["cn"][0]=$attributes["firstname"]." ".$attributes["surname"];
-			$mod["displayname"][0]=$attributes["firstname"]." ".$attributes["surname"];
-			$mod["name"][0]=$attributes["firstname"]." ".$attributes["surname"];
-		}
-		
-		//set the account control attribute
-		if ($attributes["enabled"]){
-			if ($attributes["enabled"]){
-				$control_options=array("NORMAL_ACCOUNT");
-			} else {
-				$control_options=array("NORMAL_ACCOUNT","ACCOUNTDISABLE");
-			}
+		//set the account control attribute (only if specified)
+		if (array_key_exists("enabled",$attributes)){
+			if ($attributes["enabled"]){ $control_options=array("NORMAL_ACCOUNT"); }
+			else { $control_options=array("NORMAL_ACCOUNT","ACCOUNTDISABLE"); }
 			$mod["userAccountControl"][0]=$this->account_control($control_options);
 		}
-		
-		//ldap doesn't like NULL attributes, only set them if they have values
-		if ($attributes["change_password"]){ $mod["pwdLastSet"][0]=0; }
-		if ($attributes["company"]){ $mod["company"][0]=$attributes["company"]; }
-		if ($attributes["department"]){ $mod["department"][0] = $attributes["department"]; }
-		if ($attributes["description"]){ $mod["description"][0] = $attributes["description"]; }
-		if ($attributes["expires"]){ $mod["accountExpires"][0]=$attributes["accountExpires"]; } //unix epoch format?
-		if ($attributes["firstname"]){ $mod["givenname"][0]=$attributes["firstname"]; }
-		//if ($attribute["home_directory"]){ $mod["homeDirectory"][0]=$attribute["homeDirectory"]; } //UNTESTED
-		if ($attributes["initials"]){ $mod["initials"][0] = $attributes["initials"]; }
-		if ($attributes["logon_name"]){ $mod["userPrincipalName"][0]=$attributes["logon_name"]; }
-		if ($attributes["manager"]){ $mod["manager"][0]=$attributes["manager"]; }  //UNTESTED ***Use DistinguishedName***
-		if ($attributes["password"]){ $mod["unicodePwd"][0]=$this->encode_password($attributes["password"]); }
-		//if ($attributes["profile_path"]){ $mod["profilepath"][0]=$attributes["profile_path"]; } //UNTESTED
-		//if ($attributes["script_path"]){ $mod["scriptPath"][0]=$attributes["script_path"]; } //UNTESTED
-		if ($attributes["surname"]){ $mod["sn"][0]=$attributes["surname"]; }
-		if ($attributes["title"]){ $mod["title"][0]=$attributes["title"]; } 
-		//echo ("<pre>"); print_r($mod);
-		
+
 		//do the update
-		$result=@ldap_modify($this->_conn,$user_dn,$mod);
+		$result=ldap_modify($this->_conn,$user_dn,$mod);
 		if ($result==false){ return (false); }
 		
 		return (true);
@@ -429,26 +453,20 @@ class adLDAP {
 		return (true);
 	}
 
-	// Retun a complete list of "groups in groups"	
-	function recursive_groups($group){
-		if ($group==NULL){ return (false); }
+	//*****************************************************************************************************************
+	// COMPUTER FUNCTIONS
+	
+	// Returns an array of information for a specific computer
+	function computer_info($computer_name,$fields=NULL){
+		if ($computer_name==NULL){ return (false); }
+		if (!$this->_bind){ return (false); }
 
-		$ret_groups=array();
+		$filter="(&(objectClass=computer)(cn=".$computer_name."))";
+		if ($fields==NULL){ $fields=array("memberof","cn","displayname","dnshostname","distinguishedname","objectcategory","operatingsystem","operatingsystemservicepack","operatingsystemversion"); }
+		$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
+		$entries = ldap_get_entries($this->_conn, $sr);
 		
-		$groups=$this->group_info($group,array("memberof"));
-		$groups=$groups[0]["memberof"];
-
-		if ($groups){
-			$group_names=$this->nice_names($groups);
-			$ret_groups=array_merge($ret_groups,$group_names); //final groups to return
-			
-			foreach ($group_names as $id => $group_name){
-				$child_groups=$this->recursive_groups($group_name);
-				$ret_groups=array_merge($ret_groups,$child_groups);
-			}
-		}
-
-		return ($ret_groups);
+		return ($entries);
 	}
 
 	// Returns all AD users
@@ -500,7 +518,56 @@ class adLDAP {
 	}
 
 	//************************************************************************************************************
-	// Utility functions (not intended to be called directly)
+	// UTILITY FUNCTIONS (not intended to be called directly but I spose you could?)
+
+	function adldap_schema($attributes){
+	
+		//ldap doesn't like NULL attributes, only set them if they have values
+		// I'd like to know how to set an LDAP attribute to NULL though, at the moment I set it to a space
+		$mod=array();
+		if ($attributes["address_city"]){ $mod["l"][0]=$attributes["address_city"]; }
+		if ($attributes["address_code"]){ $mod["postalCode"][0]=$attributes["address_code"]; }
+		//if ($attributes["address_country"]){ $mod["countryCode"][0]=$attributes["address_country"]; } // use country codes?
+		if ($attributes["address_pobox"]){ $mod["postOfficeBox"][0]=$attributes["address_pobox"]; }
+		if ($attributes["address_state"]){ $mod["st"][0]=$attributes["address_state"]; }
+		if ($attributes["address_street"]){ $mod["streetAddress"][0]=$attributes["address_street"]; }
+		if ($attributes["company"]){ $mod["company"][0]=$attributes["company"]; }
+		if ($attributes["change_password"]){ $mod["pwdLastSet"][0]=0; }
+		if ($attributes["company"]){ $mod["company"][0]=$attributes["company"]; }
+		if ($attributes["department"]){ $mod["department"][0]=$attributes["department"]; }
+		if ($attributes["description"]){ $mod["description"][0]=$attributes["description"]; }
+		if ($attributes["display_name"]){ $mod["displayName"][0]=$attributes["display_name"]; }
+		if ($attributes["email"]){ $mod["mail"][0]=$attributes["email"]; }
+		if ($attributes["expires"]){ $mod["accountExpires"][0]=$attributes["expires"]; } //unix epoch format?
+		if ($attributes["firstname"]){ $mod["givenName"][0]=$attributes["firstname"]; }
+		if ($attributes["home_directory"]){ $mod["homeDirectory"][0]=$attributes["home_directory"]; }
+		if ($attributes["home_drive"]){ $mod["homeDrive"][0]=$attributes["home_drive"]; }
+		if ($attributes["initials"]){ $mod["initials"][0]=$attributes["initials"]; }
+		if ($attributes["logon_name"]){ $mod["userPrincipalName"][0]=$attributes["logon_name"]; }
+		if ($attributes["manager"]){ $mod["manager"][0]=$attributes["manager"]; }  //UNTESTED ***Use DistinguishedName***
+		if ($attributes["office"]){ $mod["physicalDeliveryOfficeName"][0]=$attributes["office"]; }
+		if ($attributes["password"]){ $mod["unicodePwd"][0]=$this->encode_password($attributes["password"]); }
+		if ($attributes["profile_path"]){ $mod["profilepath"][0]=$attributes["profile_path"]; }
+		if ($attributes["script_path"]){ $mod["scriptPath"][0]=$attributes["script_path"]; }
+		if ($attributes["surname"]){ $mod["sn"][0]=$attributes["surname"]; }
+		if ($attributes["title"]){ $mod["title"][0]=$attributes["title"]; }
+		if ($attributes["telephone"]){ $mod["telephoneNumber"][0]=$attributes["telephone"]; }
+		if ($attributes["web_page"]){ $mod["wWWHomePage"][0]=$attributes["web_page"]; }
+		//echo ("<pre>"); print_r($mod);
+/*
+		// modifying a name is a bit fiddly
+		if ($attributes["firstname"] && $attributes["surname"]){
+			$mod["cn"][0]=$attributes["firstname"]." ".$attributes["surname"];
+			$mod["displayname"][0]=$attributes["firstname"]." ".$attributes["surname"];
+			$mod["name"][0]=$attributes["firstname"]." ".$attributes["surname"];
+		}
+*/
+
+
+		if (count($mod)==0){ return (false); }
+		return ($mod);
+	}
+
 
 	function group_cn($gid){
 		// coping with AD not returning the primary group
@@ -533,6 +600,19 @@ class adLDAP {
 		$encoded="";
 		for ($i=0; $i <strlen($password); $i++){ $encoded.="{$password{$i}}\000"; }
 		return ($encoded);
+	}
+	
+	// Escape bad characters
+	// DEVELOPERS SHOULD BE DOING PROPER FILTERING IF THEY'RE ACCEPTING USER INPUT
+	// this is just a list of characters with known problems and I'm trying not to strip out other languages
+	function ldap_slashes($str){
+		$illegal=array("(",")","#"); // the + character has problems too, but it's an illegal character
+		
+		$legal=array();
+		foreach ($illegal as $id => $char){ $legal[$id]="\\".$char; } //make up the array of legal chars
+		
+		$str=str_replace($illegal,$legal,$str); //replace them
+		return ($str);
 	}
 	
 	// Return a random controller
