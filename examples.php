@@ -1,58 +1,102 @@
-<?php
-//include the class
+<?
+/*
+Examples file
+
+To test any of the functions, just change the 0 to a 1.
+*/
+
+//error_reporting(E_ALL ^ E_NOTICE);
+
 include ("adLDAP.php");
+$ldap=new adLDAP($options);
+//var_dump($ldap);
 
-//create the LDAP connection
-$adldap = new adLDAP();
+echo ("<pre>\n");
 
-//variables, change these :)
-$user="username";
-$pass="password";
-
-//some stuff to search for
-$lookup_user  = "username"; //a user
-$lookup_group = "Group Name"; //a group
-
-//authenticate a user
-if ($adldap -> authenticate($user,$pass)){
-
-	echo ("Authenticated ok!<br><br>\n");
-
-	// User Information
-	$info=$adldap->user_info($lookup_user,$fields);
-	echo "User Information:";
-	echo ("<pre>"); print_r($info); echo ("</pre>\n");
-	
-	// Users's Groups
-	$info=$adldap->user_groups($lookup_user);
-	echo "User's Groups:";
-	echo ("<pre>"); print_r($info); echo ("</pre>\n");
-
-	// Group Information
-	$info=$adldap->group_info($lookup_group);
-	echo "Group Information for '".$lookup_group."':";
-	echo "<pre>"; print_r($info); echo "</pre>\n";
-
-	//check to see if they're a member of a group
-	if ($adldap -> user_ingroup($lookup_user,$lookup_group)){
-		echo ("SUCCESS! User is a member of group: ".$lookup_group."<br><br>\n");
-	} else {
-		echo ("FAILED! User is not a member of group: ".$lookup_group."<br><br>\n");
-	}
-
-	// All Users
-	$info = $adldap->all_users(true);
-	echo "All Users: (". count($info) .")";
-	echo "<pre>"; print_r($info); echo "</pre>\n";
-	
-	// All Groups
-	$info = $adldap->all_groups(true);
-	echo "All Groups: (". count($info) ."):";
-	echo "<pre>"; print_r($info); echo "</pre>\n";
-
-} else {
-
-	echo ("Authentication failed!");
+// authenticate a username/password
+if (0){
+	$result=$ldap->authenticate("username","password");
+	var_dump($result);
 }
 
+// add a group to a group
+if (0){
+	$result=$ldap->group_add_group("Parent Group Name","Child Group Name");
+	var_dump($result);
+}
+
+// add a user to a group
+if (0){
+	$result=$ldap->group_add_user("Group Name","username");
+	var_dump($result);
+}
+
+// create a group
+if (0){
+	$attributes=array(
+		"group_name"=>"Test Group",
+		"description"=>"Just Testing",
+		"container"=>array("Groups","A Container"),
+	);
+	$result=$ldap->group_create($attributes);
+	var_dump($result);
+}
+
+// retrieve information about a group
+if (0){
+	$result=$ldap->group_info("Group Name");
+	var_dump($result);
+}
+
+// create a user account
+if (0){
+	$attributes=array(
+		"username"=>"freds",
+		"logon_name"=>"freds@mydomain.local",
+		"firstname"=>"Fred",
+		"surname"=>"Smith",
+		"company"=>"My Company",
+		"department"=>"My Department",
+		"email"=>"freds@mydomain.local",
+		"container"=>array("Container Parent","Container Child"),
+		"enabled"=>1,
+		"password"=>"Password123",
+	);
+	
+	$result=$ldap->user_create($attributes);
+	var_dump($result);
+}
+
+// retrieve the group membership for a user
+if (0){
+	$result=$ldap->user_groups("username");
+	print_r($result);
+}
+
+// retrieve information about a user
+if (0){
+	$result=$ldap->user_info("username");
+	print_r($result);
+}
+
+// check if a user is a member of a group
+if (0){
+	$result=$ldap->user_ingroup("username","Group Name");
+	var_dump($result);
+}
+
+// modify a user account (this example will set "user must change password at next logon")
+if (0){
+	$attributes=array(
+		"change_password"=>1,
+	);
+	$result=$ldap->user_modify("username",$attributes);
+	var_dump($result);
+}
+
+// change the password of a user
+if (0){
+	$result=$ldap->user_password("username","Password123");
+	var_dump($result);
+}
 ?>

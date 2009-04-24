@@ -1,7 +1,7 @@
 <?php
 //log them out
-$lg=$_GET['logout'];
-if ($lg=="yes"){ //destroy the session
+$logout=$_GET['logout'];
+if ($logout=="yes"){ //destroy the session
 	session_start();
 	$_SESSION = array();
 	session_destroy();
@@ -10,27 +10,29 @@ if ($lg=="yes"){ //destroy the session
 //force the browser to use ssl (STRONGLY RECOMMENDED!!!!!!!!)
 if ($_SERVER["SERVER_PORT"]!=443){ header("Location: https://".$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF']); exit(); }
 
-$user=strtoupper($_POST["user"]); //remove case sensitivity on the username
-$pass=$_POST["pass"];
+//you should look into using PECL filter or some form of filtering here for POST variables
+$username=strtoupper($_POST["username"]); //remove case sensitivity on the username
+$password=$_POST["password"];
 $formage=$_POST["formage"];
 
-if (($formage=="old") && ($user!=NULL)){ //prevent null bind
+if ($_POST["oldform"]){ //prevent null bind
 
-	//include the class and create a connection
-	include ("adLDAP.php");
-	$adldap = new adLDAP();
-	
-	$failed=0;
-	//authenticate the user
-	if ($adldap -> authenticate($user,$pass)){
-		session_start();
-		$_SESSION['username']=$user;
-		$redir="Location: https://".$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF'])."/menu.htm";
-		header($redir);
-		exit;
-	} else {
-		$failed=1;
+	if ($username!=NULL && $password!=NULL){
+		//include the class and create a connection
+		include ("adLDAP.php");
+		$adldap = new adLDAP();
+		
+		//authenticate the user
+		if ($adldap -> authenticate($username,$password)){
+			//establish your session and redirect
+			session_start();
+			$_SESSION["username"]=$username;
+			$redir="Location: https://".$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF'])."/menu.htm";
+			header($redir);
+			exit;
+		}
 	}
+	$failed=1;
 }
 
 ?>
@@ -46,17 +48,17 @@ This area is restricted.<br>
 Please login to continue.<br>
 
 <form method='post' action='<?php echo $_SERVER["PHP_SELF"]; ?>'>
-<input type='hidden' name='formage' value='old'>
+<input type='hidden' name='oldform' value='1'>
 
-Username: <input type='text' name='user' value='<?php echo $username; ?>'><br>
-Password: <input type='password' name='pass'><br>
+Username: <input type='text' name='username' value='<?php echo ($username); ?>'><br>
+Password: <input type='password' name='password'><br>
 <br>
 
 <input type='submit' name='submit' value='Submit'><br>
 <?php if ($failed){ echo ("<br>Login Failed!<br><br>\n"); } ?>
 </form>
 
-<?php if ($lg=="yes") { echo ("<br>You have successfully logged out."); } ?>
+<?php if ($logout=="yes") { echo ("<br>You have successfully logged out."); } ?>
 
 
 </body>
