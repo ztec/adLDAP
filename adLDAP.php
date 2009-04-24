@@ -1,13 +1,13 @@
 <?php
 /*
 	LDAP FUNCTIONS FOR MANIPULATING ACTIVE DIRECTORY
-	Version 1.3
+	Version 1.4
 
 	Maintained by Scott Barnett
 	email: scott@wiggumworld.com
 	http://adldap.sourceforge.net/
 
-	Written for PHP 4, should still work fine on PHP 5.
+	Works with both PHP 4 and PHP 5
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -39,11 +39,14 @@
 	user_ingroup($user,$group)
 	Returns true if the user is a member of the group
 	
+	group_info($group)
+	Returns an array of information for a specific group
+	
 	all_users($include_desc = false, $search = "*", $sorted = true)
-	Returns all AD users
+	Returns all AD users (expensive on resources)
 	
 	all_groups($include_desc = false, $search = "*", $sorted = true)
-	Returns all AD groups
+	Returns all AD groups (expensive on resources)
 
 */
 
@@ -57,6 +60,8 @@ define ('ADLDAP_SECURITY_LOCAL_GROUP', 536870912);
 define ('ADLDAP_DISTRIBUTION_LOCAL_GROUP', 536870913);
 
 class adLDAP {
+	// BEFORE YOU ASK A QUESTION, PLEASE READ THE FAQ
+	// http://adldap.sourceforge.net/faq.php
 
 	// You will need to edit these variables to suit your installation
 	var $_account_suffix="@mydomain.local";
@@ -96,9 +101,7 @@ class adLDAP {
 	function random_controller(){
 		//select a random domain controller
 		mt_srand(doubleval(microtime()) * 100000000);
-		$rand=mt_rand(1,count($this->_domain_controllers));
-		$rand--;
-		return $this->_domain_controllers[$rand];
+		return ($this->_domain_controllers[array_rand($this->_domain_controllers)]);
 	}
 
 	// authenticate($username,$password)
@@ -113,10 +116,9 @@ class adLDAP {
 			$this->_user_pass=$password;
 			
 			$this->_bind = @ldap_bind($this->_conn,$this->_user_dn,$this->_user_pass);
-			if ($this->_bind)
-				$returnval=true;
+			if ($this->_bind){ $returnval=true; }
 		}
-		return $returnval;
+		return ($returnval);
 	}
 	
 	// rebind()
@@ -126,8 +128,8 @@ class adLDAP {
 		//connect with another account to search with if necessary
 		$ad_dn=$this->_ad_username.$this->_account_suffix;
 		$this->_bind = @ldap_bind($this->_conn,$ad_dn,$this->_ad_password);
-		if ($this->_bind){ return true; }
-		return false;
+		if ($this->_bind){ return (true); }
+		return (false);
 	}
 
 	// user_info($user,$fields)
@@ -150,11 +152,11 @@ class adLDAP {
 				}
 				$entries[0]["memberof"]["count"]++;
 
-				return $entries;
+				return ($entries);
 			}
 		}
 
-		return false;
+		return (false);
 	}
 	
 	// user_groups($user)
@@ -166,7 +168,7 @@ class adLDAP {
 			//search the directory for their information
 			$info=@$this->user_info($user,array("memberof","primarygroupid"));
 			//echo ("<pre>\n"); print_r($info); echo ("</pre>\n");
-			$groups=$info[0][memberof]; //presuming the entry returned is our guy (unique usernames)
+			$groups=$info[0]["memberof"]; //presuming the entry returned is our guy (unique usernames)
 			
 			$group_array=array();
 			
@@ -184,13 +186,12 @@ class adLDAP {
 					} else {
 						$group_name.=$line[$j];
 					}
-
 				}
 				$group_array[$i] = $group_name;
 			}
-			return $group_array;
+			return ($group_array);
 		}
-		return false;	
+		return (false);	
 	}
 
 	// user_ingroup($user,$group)
@@ -201,10 +202,10 @@ class adLDAP {
 
 			if ($this->_bind){
 				$groups=$this->user_groups($user,array("memberof"));
-				if (in_array($group,$groups)){ return true; }
+				if (in_array($group,$groups)){ return (true); }
 			}
 		}
-		return false;
+		return (false);
 	}
 	
 	function group_cn($gid){
@@ -223,7 +224,6 @@ class adLDAP {
 			$fields=array("primarygrouptoken","samaccountname","distinguishedname");
 			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 			$entries = ldap_get_entries($this->_conn, $sr);
-			//echo ("<pre>"); print_r($entries); echo ("</pre>");
 			
 			for ($i=0; $i<$entries["count"]; $i++){
 				if ($entries[$i]["primarygrouptoken"][0]==$gid){
@@ -232,10 +232,24 @@ class adLDAP {
 				}
 			}
 		}
-		return $r;
+		return ($r);
 	}
 	
-	
+	// group_info($group_name,$fields=NULL)
+	// Returns an array of information for a specified group
+	function group_info($group_name,$fields=NULL){
+		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
+
+		if ($this->_bind){
+			$filter="(&(objectCategory=group)(name=".$group_name."))";
+			if ($fields==NULL){ $fields=array("member","cn","description","distinguishedname","objectcategory","samaccountname"); }
+			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
+			$entries = ldap_get_entries($this->_conn, $sr);
+			return ($entries);
+		}
+		return (false);
+	}
+
 	function all_users($include_desc = false, $search = "*", $sorted = true){
 		// Returns all AD users
 		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
@@ -257,11 +271,10 @@ class adLDAP {
 				else
 					array_push($users_array, $entries[$i]["samaccountname"][0]);
 			}
-			if( $sorted )
-				asort($users_array);
-			return $users_array;
+			if( $sorted ){ asort($users_array); }
+			return ($users_array);
 		}
-		return false;
+		return (false);
 	}
 	
 	function all_groups($include_desc = false, $search = "*", $sorted = true){
@@ -286,9 +299,9 @@ class adLDAP {
 					array_push($groups_array, $entries[$i]["samaccountname"][0]);
 			}
 			if( $sorted ){ asort($groups_array); }
-			return $groups_array;
+			return ($groups_array);
 		}
-		return false;
+		return (false);
 	}
 } // End class
 

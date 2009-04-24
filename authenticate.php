@@ -1,4 +1,4 @@
-<?
+<?php
 //log them out
 $lg=$_GET['logout'];
 if ($lg=="yes"){ //destroy the session
@@ -45,18 +45,18 @@ if (($formage=="old") && ($user!=NULL)){ //prevent null bind
 This area is restricted.<br>
 Please login to continue.<br>
 
-<form method='post' action='<? echo $_SERVER["PHP_SELF"]; ?>'>
+<form method='post' action='<?php echo $_SERVER["PHP_SELF"]; ?>'>
 <input type='hidden' name='formage' value='old'>
 
-Username: <input type='text' name='user' value='<? echo $username; ?>'><br>
+Username: <input type='text' name='user' value='<?php echo $username; ?>'><br>
 Password: <input type='password' name='pass'><br>
 <br>
 
 <input type='submit' name='submit' value='Submit'><br>
-<? if ($failed){ echo ("<br>Login Failed!<br><br>\n"); } ?>
+<?php if ($failed){ echo ("<br>Login Failed!<br><br>\n"); } ?>
 </form>
 
-<? if ($lg=="yes") { echo ("<br>You have successfully logged out."); } ?>
+<?php if ($lg=="yes") { echo ("<br>You have successfully logged out."); } ?>
 
 
 </body>
