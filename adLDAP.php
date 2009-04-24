@@ -1,7 +1,7 @@
 <?php
 /*
 	LDAP FUNCTIONS FOR MANIPULATING ACTIVE DIRECTORY
-	Version 1.1
+	Version 1.2
 
 	Maintained by Scott Barnett
 	email: scott@wiggumworld.com
@@ -18,6 +18,12 @@
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU General Public License for more details.
+
+	********************************************************************
+	Something to keep in mind is that Active Directory is a permissions
+	based directory. If you bind as a domain user, you can't fetch as
+	much information on other users as you could as a domain admin.
+	********************************************************************
 
 	FUNCTIONS:
 		
@@ -64,21 +70,27 @@ class adLDAP {
 	var $_ad_username=NULL;
 	var $_ad_password=NULL;
 	
+	// AD does not return the primary group. http://support.microsoft.com/?kbid=321360
+	// This tweak will resolve the real primary group, but may be resource intensive. 
+	// Setting to false will fudge "Domain Users" and is much faster.
+	var $_real_primarygroup=true;
+	
 	//other variables
 	var $_user_dn;
 	var $_user_pass;
 	var $_conn;
-	var $_bind; 
+	var $_bind;
 
 	// default constructor
 	function adLDAP(){
 		//connect to the LDAP server as the username/password
 		$this->_conn = ldap_connect($this->random_controller());
 		ldap_set_option($this->_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+		ldap_set_option($this->_conn, LDAP_OPT_REFERRALS, 0); //disable plain text passwords
 		return true;
 	}
 
-	//destructor not implemented until PHP5
+	// default destructor
 	function __destruct(){ ldap_close ($this->_conn); }
 
 	function random_controller(){
@@ -130,9 +142,13 @@ class adLDAP {
 				if ($fields==NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid"); }
 				$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 				$entries = ldap_get_entries($this->_conn, $sr);
-
-				// AD does not return the primary group in the ldap query, we need to fudge it
-				$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+				
+				// AD does not return the primary group in the ldap query, we may need to fudge it
+				if ($this->_real_primarygroup){
+					$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+				} else {
+					$entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
+				}
 				$entries[0]["memberof"]["count"]++;
 
 				return $entries;

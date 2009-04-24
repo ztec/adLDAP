@@ -3,7 +3,7 @@
 $lg=$_GET['logout'];
 if ($lg=="yes"){ //destroy the session
 	session_start();
-	$_SESSION = array(); 
+	$_SESSION = array();
 	session_destroy();
 }
 
@@ -54,10 +54,6 @@ Password: <input type='password' name='pass'><br>
 
 <input type='submit' name='submit' value='Submit'><br>
 <? if ($failed){ echo ("<br>Login Failed!<br><br>\n"); } ?>
-</table>
-</td>
-</tr>
-</table>
 </form>
 
 <? if ($lg=="yes") { echo ("<br>You have successfully logged out."); } ?>
