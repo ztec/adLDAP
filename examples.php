@@ -1,6 +1,6 @@
 <?php
 //include the class
-require_once("adLDAP.php");
+include ("adLDAP.php");
 
 //create the LDAP connection
 $adldap = new adLDAP();
@@ -10,8 +10,8 @@ $user="username";
 $pass="password";
 
 //some stuff to search for
-$lookup_user  = "another_username"; //a user
-$lookup_group = "group name"; //a group
+$lookup_user  = "username"; //a user
+$lookup_group = "Group Name"; //a group
 
 //authenticate a user
 if ($adldap -> authenticate($user,$pass)){
@@ -34,7 +34,7 @@ if ($adldap -> authenticate($user,$pass)){
 	echo "<pre>"; print_r($info); echo "</pre>\n";
 
 	//check to see if they're a member of a group
-	if ($adldap -> user_ingroup($lookup_user,$group)){
+	if ($adldap -> user_ingroup($lookup_user,$lookup_group)){
 		echo ("SUCCESS! User is a member of group: ".$lookup_group."<br><br>\n");
 	} else {
 		echo ("FAILED! User is not a member of group: ".$lookup_group."<br><br>\n");

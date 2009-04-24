@@ -17,7 +17,7 @@ $formage=$_POST["formage"];
 if (($formage=="old") && ($user!=NULL)){ //prevent null bind
 
 	//include the class and create a connection
-	include ($_SERVER["DOCUMENT_ROOT"]."/includes/adLDAP.php");
+	include ("adLDAP.php");
 	$adldap = new adLDAP();
 	
 	$failed=0;

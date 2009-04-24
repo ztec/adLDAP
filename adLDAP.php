@@ -1,23 +1,32 @@
 <?php
 /*
-	LDAP FUNCTIONS FOR MANIPULATING ACTIVE DIRECTORY
-	Version 1.4
-
-	Maintained by Scott Barnett
+	PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY
+	Version 1.5
+	
+	Written by Scott Barnett
 	email: scott@wiggumworld.com
 	http://adldap.sourceforge.net/
-
+	
+	Copyright (C) 2006 Scott Barnett
+	
+	I'd appreciate any improvements or additions to be submitted back
+	to benefit the entire community :)
+	
 	Works with both PHP 4 and PHP 5
-
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
+	
+	The examples should be pretty self explanatory. If you require more
+	information, please visit http://adldap.sourceforge.net/
+	
+	
+	This library is free software; you can redistribute it and/or
+	modify it under the terms of the GNU Lesser General Public
+	License as published by the Free Software Foundation; either
+	version 2.1 of the License, or (at your option) any later version.
+	
+	This library is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	Lesser General Public License for more details.
 
 	********************************************************************
 	Something to keep in mind is that Active Directory is a permissions
@@ -33,10 +42,10 @@
 	user_info($user,$fields=NULL)
 	Returns an array of information for a specific user
 
-	user_groups($user)
+	user_groups($user,$recursive=NULL)
 	Returns an array of groups that a user is a member off
 
-	user_ingroup($user,$group)
+	user_ingroup($user,$group,$recursive=NULL)
 	Returns true if the user is a member of the group
 	
 	group_info($group)
@@ -64,21 +73,30 @@ class adLDAP {
 	// http://adldap.sourceforge.net/faq.php
 
 	// You will need to edit these variables to suit your installation
-	var $_account_suffix="@mydomain.local";
+	var $_account_suffix="@mydcomain.local";
 	var $_base_dn = "DC=mydomain,DC=local"; 
 	
 	// An array of domain controllers. Specify multiple controllers if you 
 	// would like the class to balance the LDAP queries amongst multiple servers
-	var $_domain_controllers = array ("dc.mydomain.local");
+	var $_domain_controllers = array ("dc01.mydomain.local");
 	
-	// optional account for searching
-	var $_ad_username=NULL;
-	var $_ad_password=NULL;
+	// optional account with higher privileges for searching
+	var $_ad_username="username";
+	var $_ad_password="password";
 	
 	// AD does not return the primary group. http://support.microsoft.com/?kbid=321360
 	// This tweak will resolve the real primary group, but may be resource intensive. 
-	// Setting to false will fudge "Domain Users" and is much faster.
+	// Setting to false will fudge "Domain Users" and is much faster. Keep in mind though that if
+	// someone's primary group is NOT domain users, this is obviously going to bollocks the results
 	var $_real_primarygroup=true;
+	
+	// When querying group memberships, do it recursively
+	// eg. User Fred is a member of Group A, which is a member of Group B, which is a member of Group C
+	// user_ingroup("Fred","C") will returns true with this option turned on, false if turned off
+	var $_recursive_groups=true;
+	
+	// You should not need to edit anything below this line
+	//******************************************************************************************
 	
 	//other variables
 	var $_user_dn;
@@ -140,7 +158,10 @@ class adLDAP {
 			
 			if ($this->_bind){ //perform the search and grab all their details
 				$filter="samaccountname=".$user;
-				if ($fields==NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid"); }
+				if ($fields==NULL){
+					$fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid");
+					//$fields=array("*");
+				}
 				$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 				$entries = ldap_get_entries($this->_conn, $sr);
 				
@@ -150,8 +171,10 @@ class adLDAP {
 				} else {
 					$entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
 				}
-				$entries[0]["memberof"]["count"]++;
+				
+				//echo ("<pre>"); print_r($entries);
 
+				$entries[0]["memberof"]["count"]++;
 				return ($entries);
 			}
 		}
@@ -161,52 +184,86 @@ class adLDAP {
 	
 	// user_groups($user)
 	//	Returns an array of groups that a user is a member off
-	function user_groups($user){
+	function user_groups($user,$recursive=NULL){
 		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
+		if ($recursive==NULL){ $recursive=$this->_recursive_groups; }
 		
 		if ($this->_bind){
 			//search the directory for their information
-			$info=@$this->user_info($user,array("memberof","primarygroupid"));
-			//echo ("<pre>\n"); print_r($info); echo ("</pre>\n");
+			$info=@$this->user_info($user,array("memberof"));
+			//echo ("<pre>"); print_r($info);
 			$groups=$info[0]["memberof"]; //presuming the entry returned is our guy (unique usernames)
 			
-			$group_array=array();
-			
-			for ($i=0; $i<$groups["count"]; $i++){ //for each group
-				$line=$groups[$i];
-				
-				$group_name="";
-				$line_length=strlen($line);
-				//more presumptions, they're all prefixed with CN=
-				//so we ditch the first three characters and the group
-				//name goes up to the first comma
-				for ($j=3; $j<$line_length; $j++){
-					if ($line[$j]==","){
-						$j=$line_length;
-					} else {
-						$group_name.=$line[$j];
-					}
+			$group_array=$this->nice_names($groups);
+
+			if ($recursive){
+				foreach ($group_array as $id => $group_name){
+					$extra_groups=$this->recursive_groups($group_name);
+					$group_array=array_merge($group_array,$extra_groups);
 				}
-				$group_array[$i] = $group_name;
 			}
+			
 			return ($group_array);
 		}
 		return (false);	
 	}
-
+	
 	// user_ingroup($user,$group)
 	//	Returns true if the user is a member of the group
-	function user_ingroup($user,$group){
+	function user_ingroup($user,$group,$recursive=NULL){
+		if ($recursive==NULL){ $recursive=$this->_recursive_groups; }
+		
 		if (($user!=NULL) && ($group!=NULL)){
 			if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
 
 			if ($this->_bind){
-				$groups=$this->user_groups($user,array("memberof"));
+				$groups=$this->user_groups($user,array("memberof"),$recursive);
 				if (in_array($group,$groups)){ return (true); }
 			}
 		}
 		return (false);
 	}
+	
+	function recursive_groups($group){
+		$ret_groups=array();
+		
+		$groups=$this->group_info($group,array("memberof"));
+		$groups=$groups[0]["memberof"];
+
+		if ($groups){
+			$group_names=$this->nice_names($groups);
+			$ret_groups=array_merge($ret_groups,$group_names); //final groups to return
+			
+			foreach ($group_names as $id => $group_name){
+				$child_groups=$this->recursive_groups($group_name);
+				$ret_groups=array_merge($ret_groups,$child_groups);
+			}
+
+		}
+
+		return ($ret_groups);
+	}
+
+	// take an ldap query and return the nice names, without all the LDAP prefixes (eg. CN, DN)
+	function nice_names($groups){
+
+		$group_array=array();
+		for ($i=0; $i<$groups["count"]; $i++){ //for each group
+			$line=$groups[$i];
+			
+			if (strlen($line)>0){ 
+				//more presumptions, they're all prefixed with CN=
+				//so we ditch the first three characters and the group
+				//name goes up to the first comma
+				$bits=explode(",",$line);
+				$group_array[]=substr($bits[0],3,(strlen($bits[0])-3));
+			}
+		}
+		return ($group_array);	
+	}
+
+
+
 	
 	function group_cn($gid){
 		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
@@ -241,10 +298,16 @@ class adLDAP {
 		if ($this->_ad_username!=NULL){ $this->rebind(); } //bind as a another account if necessary
 
 		if ($this->_bind){
+			//escape brackets
+			$group_name=str_replace("(","\(",$group_name);
+			$group_name=str_replace(")","\)",$group_name);
+			
 			$filter="(&(objectCategory=group)(name=".$group_name."))";
-			if ($fields==NULL){ $fields=array("member","cn","description","distinguishedname","objectcategory","samaccountname"); }
+			//echo ($filter."<br>");
+			if ($fields==NULL){ $fields=array("member","memberof","cn","description","distinguishedname","objectcategory","samaccountname"); }
 			$sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
 			$entries = ldap_get_entries($this->_conn, $sr);
+			//print_r($entries);
 			return ($entries);
 		}
 		return (false);
@@ -296,6 +359,7 @@ class adLDAP {
 				else if( $include_desc )
 					$groups_array[ $entries[$i]["samaccountname"][0] ] = $entries[$i]["samaccountname"][0];
 				else
+
 					array_push($groups_array, $entries[$i]["samaccountname"][0]);
 			}
 			if( $sorted ){ asort($groups_array); }
