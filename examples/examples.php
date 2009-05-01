@@ -7,7 +7,7 @@ To test any of the functions, just change the 0 to a 1.
 
 //error_reporting(E_ALL ^ E_NOTICE);
 
-include ("adLDAP.php");
+include ("../adLDAP.php");
 $ldap=new adLDAP($options);
 //var_dump($ldap);
 

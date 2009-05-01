@@ -1,14 +1,14 @@
 PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY
-Version 2.1
+Version 3.0
 
-Written by Scott Barnett
-email: scott@wiggumworld.com
+Written by Scott Barnett, Richard Hyland
+email: scott@wiggumworld.com, adldap@richardhyland.com
 http://adldap.sourceforge.net/
 
-I'd appreciate any improvements or additions to be submitted back
+We'd appreciate any improvements or additions to be submitted back
 to benefit the entire community :)
 
-Works with both PHP 4 and PHP 5
+PHP Version 5 with SSL and LDAP support 
 
 I generally install libraries and classes in a folder in the document root
 called "includes/". If you want to use somewhere else, just edit the

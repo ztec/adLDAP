@@ -19,7 +19,7 @@ if ($_POST["oldform"]){ //prevent null bind
 
 	if ($username!=NULL && $password!=NULL){
 		//include the class and create a connection
-		include ("adLDAP.php");
+		include ("../adLDAP.php");
 		$adldap = new adLDAP();
 		
 		//authenticate the user
