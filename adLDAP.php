@@ -1497,7 +1497,7 @@ class adLDAP {
                 }
             }
         }
-        if ($encode === true) {
+        if ($encode === true && $key != 'password') {
             $item = utf8_encode($item);   
         }
     }    
