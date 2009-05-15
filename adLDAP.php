@@ -1561,7 +1561,7 @@ class adLDAP {
     * @return string
     */
     protected function bool2str($bool) {
-        return ($bool) ? 'true' : 'false';
+        return ($bool) ? 'TRUE' : 'FALSE';
     }
     
     /**
