@@ -291,7 +291,7 @@ class adLDAP {
         $group_dn=$group_info[0]["dn"];
         
         $add=array();
-        $add["member"] = $user_dn;
+        $add["member"] = $contact_dn;
         
         $result=@ldap_mod_add($this->_conn,$group_dn,$add);
         if ($result==false){ return (false); }
