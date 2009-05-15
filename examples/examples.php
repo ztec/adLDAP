@@ -8,7 +8,12 @@ To test any of the functions, just change the 0 to a 1.
 //error_reporting(E_ALL ^ E_NOTICE);
 
 include ("../adLDAP.php");
-$ldap=new adLDAP($options);
+try {
+    $adldap = new adLDAP($options);
+}
+catch (adLDAPException $e) {
+    echo $e; exit();   
+}
 //var_dump($ldap);
 
 echo ("<pre>\n");
@@ -63,8 +68,13 @@ if (0){
 		"password"=>"Password123",
 	);
 	
-	$result=$ldap->user_create($attributes);
-	var_dump($result);
+    try {
+    	$result=$ldap->user_create($attributes);
+	    var_dump($result);
+    }
+    catch (adLDAPException $e) {
+        echo $e; exit();   
+    }
 }
 
 // retrieve the group membership for a user
@@ -96,7 +106,12 @@ if (0){
 
 // change the password of a user
 if (0){
-	$result=$ldap->user_password("username","Password123");
-	var_dump($result);
+    try {
+        $result=$ldap->user_password("username","Password123");
+        var_dump($result);
+    }
+    catch (adLDAPException $e) {
+        echo $e; exit();   
+    }
 }
 ?>
