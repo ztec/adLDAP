@@ -650,14 +650,16 @@ class adLDAP {
         if (!$this->_bind){ return (false); }
 
         $filter="samaccountname=".$username;
-        if ($fields==NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid"); }
+        if ($fields==NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid","objectsid"); }
         $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
         $entries = ldap_get_entries($this->_conn, $sr);
         
         // AD does not return the primary group in the ldap query, we may need to fudge it
-        if ($this->_real_primarygroup){
-            $entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+        if ($this->_real_primarygroup && isset($entries[0]["primarygroupid"][0]) && isset($entries[0]["objectsid"][0])){
+            //$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+            $entries[0]["memberof"][]=$this->get_primary_group($entries[0]["primarygroupid"][0], $entries[0]["objectsid"][0]);
         } else {
+            echo "here";
             $entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
         }
         
@@ -896,13 +898,14 @@ class adLDAP {
         if (!$this->_bind){ return (false); }
 
         $filter="distinguishedName=".$distinguishedname;
-        if ($fields==NULL){ $fields=array("distinguishedname","mail","memberof","department","displayname","telephonenumber","primarygroupid"); }
+        if ($fields==NULL){ $fields=array("distinguishedname","mail","memberof","department","displayname","telephonenumber","primarygroupid","objectsid"); }
         $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
         $entries = ldap_get_entries($this->_conn, $sr);
         
         // AD does not return the primary group in the ldap query, we may need to fudge it
         if ($this->_real_primarygroup){
-            $entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+            //$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+            $entries[0]["memberof"][]=$this->get_primary_group($entries[0]["primarygroupid"][0], $entries[0]["objectsid"][0]);
         } else {
             $entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
         }
@@ -1334,8 +1337,9 @@ class adLDAP {
     * If someone can show otherwise, I'd like to know about it :)
     * this way is resource intensive and generally a pain in the @#%^
     * 
+    * @deprecated deprecated since version 3.1, see get get_primary_group
     * @param string $gid Group ID
-    * @return array
+    * @return string
     */
     protected function group_cn($gid){    
         if ($gid==NULL){ return (false); }
@@ -1355,6 +1359,67 @@ class adLDAP {
 
         return ($r);
     }
+    
+    /**
+    * Coping with AD not returning the primary group
+    * http://support.microsoft.com/?kbid=321360 
+    * 
+    * This is a re-write based on code submitted by Bruce which prevents the 
+    * need to search each security group to find the true primary group
+    * 
+    * @param string $gid Group ID
+    * @param string $usersid User's Object SID
+    * @return string
+    */
+    protected function get_primary_group($gid, $usersid){
+        if ($gid==NULL || $usersid==NULL){ return (false); }
+        $r=false;
+
+        $gsid = substr_replace($usersid,pack('V',$gid),strlen($usersid)-4,4);
+        $filter='(objectsid='.$this->getTextSID($gsid).')';
+        $fields=array("samaccountname","distinguishedname");
+        $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
+        $entries = ldap_get_entries($this->_conn, $sr);
+
+        return $entries[0]['distinguishedname'][0];
+     }
+     
+    /**
+    * Convert a binary SID to a text SID
+    * 
+    * @param string $binsid A Binary SID
+    * @return string
+    */
+     protected function getTextSID($binsid) {
+        $hex_sid = bin2hex($binsid);
+        $rev = hexdec(substr($hex_sid, 0, 2));
+        $subcount = hexdec(substr($hex_sid, 2, 2));
+        $auth = hexdec(substr($hex_sid, 4, 12));
+        $result = "$rev-$auth";
+
+        for ($x=0;$x < $subcount; $x++) {
+            $subauth[$x] =
+                hexdec($this->little_endian(substr($hex_sid, 16 + ($x * 8), 8)));
+                $result .= "-" . $subauth[$x];
+        }
+
+        // Cheat by tacking on the S-
+        return 'S-' . $result;
+     }
+     
+    /**
+    * Converts a little-endian hex number to one that hexdec() can convert
+    * 
+    * @param string $hex A hex code
+    * @return string
+    */
+     protected function little_endian($hex) {
+        $result = '';
+        for ($x = strlen($hex) - 2; $x >= 0; $x = $x - 2) {
+            $result .= substr($hex, $x, 2);
+        }
+        return $result;
+     }
     
     /**
     * Obtain the user's distinguished name based on their userid 
