@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 3.0
+ * Version 3.1
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -30,7 +30,7 @@
  * @copyright (c) 2006-2009 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision$
- * @version 3.0
+ * @version 3.1
  * @link http://adldap.sourceforge.net/
  */
 
@@ -135,6 +135,7 @@ class adLDAP {
     * Tries to bind to the AD domain over LDAP or LDAPs
     * 
     * @param array $options Array of options to pass to the constructor
+    * @throws Exception - if unable to bind to Domain Controller
     * @return bool
     */
     function __construct($options=array()){
@@ -149,15 +150,15 @@ class adLDAP {
             if (array_key_exists("use_ssl",$options)){ $this->_use_ssl=$options["use_ssl"]; }
             if (array_key_exists("recursive_groups",$options)){ $this->_recursive_groups=$options["recursive_groups"]; }
         }
-    
+
         // Connect to the AD/LDAP server as the username/password
         $dc=$this->random_controller();
         if ($this->_use_ssl){
-            $this->_conn = ldap_connect("ldaps://".$dc);
+            $this->_conn = ldap_connect("ldaps://".$dc, 636);
         } else {
             $this->_conn = ldap_connect($dc);
         }
-        
+               
         // Set some ldap options for talking to AD
         ldap_set_option($this->_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
         ldap_set_option($this->_conn, LDAP_OPT_REFERRALS, 0);
@@ -168,9 +169,9 @@ class adLDAP {
             if (!$this->_bind){
                 if ($this->_use_ssl){
                     // If you have problems troubleshooting, remove the @ character from the ldap_bind command above to get the actual error message
-                    echo ("FATAL: AD bind failed. Either the LDAPS connection failed or the login credentials are incorrect."); exit();
+                    throw new adLDAPException('Bind to Active Directory failed. Either the LDAPs connection failed or the login credentials are incorrect. AD said: ' . $this->get_last_error());
                 } else {
-                    echo ("FATAL: AD bind failed. Check the login credentials."); exit();
+                    throw new adLDAPException('Bind to Active Directory failed. Check the login credentials and/or server details. AD said: ' . $this->get_last_error());
                 }
             }
         }
@@ -206,7 +207,10 @@ class adLDAP {
         // Cnce we've checked their details, kick back into admin mode if we have it
         if ($this->_ad_username!=NULL && !$prevent_rebind){
             $this->_bind = @ldap_bind($this->_conn,$this->_ad_username.$this->_account_suffix,$this->_ad_password);
-            if (!$this->_bind){ echo ("FATAL: AD rebind failed."); exit(); } // This should never happen in theory
+            if (!$this->_bind){
+                // This should never happen in theory
+                throw new adLDAPException('Rebind to Active Directory failed. AD said: ' . $this->get_last_error());
+            } 
         }
         
         return (true);
@@ -559,7 +563,9 @@ class adLDAP {
         if (!array_key_exists("container",$attributes)){ return ("Missing compulsory field [container]"); }
         if (!is_array($attributes["container"])){ return ("Container attribute must be an array."); }
 
-        if (array_key_exists("password",$attributes) && !$this->_use_ssl){ echo ("FATAL: SSL must be configured on your webserver and enabled in the class to set passwords."); exit(); }
+        if (array_key_exists("password",$attributes) && !$this->_use_ssl){ 
+            throw new adLDAPException('SSL must be configured on your webserver and enabled in the class to set passwords.');
+        }
 
         if (!array_key_exists("display_name",$attributes)){ $attributes["display_name"]=$attributes["firstname"]." ".$attributes["surname"]; }
 
@@ -691,7 +697,9 @@ class adLDAP {
     */
     public function user_modify($username,$attributes){
         if ($username==NULL){ return ("Missing compulsory field [username]"); }
-        if (array_key_exists("password",$attributes) && !$this->_use_ssl){ echo ("FATAL: SSL must be configured on your webserver and enabled in the class to set passwords."); exit(); }
+        if (array_key_exists("password",$attributes) && !$this->_use_ssl){ 
+            throw new adLDAPException('SSL must be configured on your webserver and enabled in the class to set passwords.');
+        }
         //if (array_key_exists("container",$attributes)){
             //if (!is_array($attributes["container"])){ return ("Container attribute must be an array."); }
             //$attributes["container"]=array_reverse($attributes["container"]);
@@ -762,7 +770,9 @@ class adLDAP {
         if ($username==NULL){ return (false); }
         if ($password==NULL){ return (false); }
         if (!$this->_bind){ return (false); }
-        if (!$this->_use_ssl){ echo ("FATAL: SSL must be configured on your webserver and enabled in the class to set passwords."); exit(); }
+        if (!$this->_use_ssl){ 
+            throw new adLDAPException('SSL must be configured on your webserver and enabled in the class to set passwords.');
+        }
         
         $user_dn=$this->user_dn($username);
         if ($user_dn===false){ return (false); }
@@ -1502,5 +1512,20 @@ class adLDAP {
         }
     }    
 }
+
+/**
+* adLDAP Exception Handler
+* 
+* Exceptions of this type are thrown on bind failure or when SSL is required but not configured
+* Example:
+* try {
+*   $adldap = new adLDAP();
+* }
+* catch (adLDAPException $e) {
+*   echo $e;
+*   exit();
+* }
+*/
+class adLDAPException extends Exception {}
 
 ?>
