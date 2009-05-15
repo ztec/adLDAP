@@ -654,12 +654,14 @@ class adLDAP {
         $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
         $entries = ldap_get_entries($this->_conn, $sr);
         
-        // AD does not return the primary group in the ldap query, we may need to fudge it
-        if ($this->_real_primarygroup && isset($entries[0]["primarygroupid"][0]) && isset($entries[0]["objectsid"][0])){
-            //$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
-            $entries[0]["memberof"][]=$this->get_primary_group($entries[0]["primarygroupid"][0], $entries[0]["objectsid"][0]);
-        } else {
-            $entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
+        if ($entries[0]['count'] >= 1) {
+            // AD does not return the primary group in the ldap query, we may need to fudge it
+            if ($this->_real_primarygroup && isset($entries[0]["primarygroupid"][0]) && isset($entries[0]["objectsid"][0])){
+                //$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+                $entries[0]["memberof"][]=$this->get_primary_group($entries[0]["primarygroupid"][0], $entries[0]["objectsid"][0]);
+            } else {
+                $entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
+            }
         }
         
         $entries[0]["memberof"]["count"]++;
@@ -901,12 +903,14 @@ class adLDAP {
         $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
         $entries = ldap_get_entries($this->_conn, $sr);
         
-        // AD does not return the primary group in the ldap query, we may need to fudge it
-        if ($this->_real_primarygroup){
-            //$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
-            $entries[0]["memberof"][]=$this->get_primary_group($entries[0]["primarygroupid"][0], $entries[0]["objectsid"][0]);
-        } else {
-            $entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
+        if ($entries[0]['count'] >= 1) {
+            // AD does not return the primary group in the ldap query, we may need to fudge it
+            if ($this->_real_primarygroup && isset($entries[0]["primarygroupid"][0]) && isset($entries[0]["primarygroupid"][0])){
+                //$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
+                $entries[0]["memberof"][]=$this->get_primary_group($entries[0]["primarygroupid"][0], $entries[0]["objectsid"][0]);
+            } else {
+                $entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
+            }
         }
         
         $entries[0]["memberof"]["count"]++;
