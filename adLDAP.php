@@ -92,7 +92,7 @@ class adLDAP {
     
     /**
     * AD does not return the primary group. http://support.microsoft.com/?kbid=321360
-    * This tweak will resolve the real primary group, but may be resource intensive. 
+    * This tweak will resolve the real primary group. 
     * Setting to false will fudge "Domain Users" and is much faster. Keep in mind though that if
     * someone's primary group is NOT domain users, this is obviously going to mess up the results
     * 
