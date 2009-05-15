@@ -659,7 +659,6 @@ class adLDAP {
             //$entries[0]["memberof"][]=$this->group_cn($entries[0]["primarygroupid"][0]);
             $entries[0]["memberof"][]=$this->get_primary_group($entries[0]["primarygroupid"][0], $entries[0]["objectsid"][0]);
         } else {
-            echo "here";
             $entries[0]["memberof"][]="CN=Domain Users,CN=Users,".$this->_base_dn;
         }
         
