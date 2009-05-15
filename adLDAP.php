@@ -1296,6 +1296,7 @@ class adLDAP {
         if ($attributes["title"]){ $mod["title"][0]=$attributes["title"]; }
         if ($attributes["telephone"]){ $mod["telephoneNumber"][0]=$attributes["telephone"]; }
         if ($attributes["mobile"]){ $mod["mobile"][0]=$attributes["mobile"]; }
+        if ($attributes["pager"]){ $mod["pager"][0]=$attributes["pager"]; }
         if ($attributes["ipphone"]){ $mod["ipphone"][0]=$attributes["ipphone"]; }
         if ($attributes["web_page"]){ $mod["wWWHomePage"][0]=$attributes["web_page"]; }
         if ($attributes["fax"]){ $mod["facsimileTelephoneNumber"][0]=$attributes["fax"]; }
