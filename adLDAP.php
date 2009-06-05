@@ -1622,22 +1622,19 @@ class adLDAP {
     }
     
     /**
-    * Escape bad characters
+    * Escape strings for the use in LDAP filters
     * 
     * DEVELOPERS SHOULD BE DOING PROPER FILTERING IF THEY'RE ACCEPTING USER INPUT
-    * this is just a list of characters with known problems and I'm trying not to strip out other languages
+    * Ported from Perl's Net::LDAP::Util escape_filter_value
     *
     * @param string $str The string the parse
+    * @author Port by Andreas Gohr <andi@splitbrain.org>
     * @return string
     */
     protected function ldap_slashes($str){
-        $illegal=array("(",")","#"); // The + character has problems too, but it's an illegal character
-        
-        $legal=array();
-        foreach ($illegal as $id => $char){ $legal[$id]="\\".$char; } // Make up the array of legal chars
-        
-        $str=str_replace($illegal,$legal,$str); // Replace them
-        return ($str);
+        return preg_replace('/([\x00-\x1F\*\(\)\\\\])/e',
+                            '"\\\\\".join("",unpack("H2","$1"))',
+                            $str);
     }
     
     /**
