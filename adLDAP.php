@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 3.1
+ * Version 3.2
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -30,7 +30,7 @@
  * @copyright (c) 2006-2009 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision$
- * @version 3.1
+ * @version 3.2
  * @link http://adldap.sourceforge.net/
  */
 
@@ -62,8 +62,8 @@ class adLDAP {
     * The account suffix for your domain, can be set when the class is invoked
     * 
     * @var string
-    */
-	protected $_account_suffix="@mydomain.local";
+    */   
+	protected $_account_suffix = "@mydomain.local";
     
     /**
     * The base dn for your domain
@@ -78,7 +78,7 @@ class adLDAP {
     * 
     * @var array
     */
-	protected $_domain_controllers = array ("dc01.mydomain.local");
+    protected $_domain_controllers = array ("dc01.mydomain.local");
 	
     /**
     * Optional account with higher privileges for searching
@@ -128,6 +128,157 @@ class adLDAP {
     */
 	protected $_conn;
 	protected $_bind;
+    
+    /**
+    * Getters and Setters
+    */
+    
+    /**
+    * Set the account suffix
+    * 
+    * @param string $_account_suffix
+    * @return void
+    */
+    public function set_account_suffix($_account_suffix)
+    {
+          $this->_account_suffix = $_account_suffix;
+    }
+
+    /**
+    * Get the account suffix
+    * 
+    * @return string
+    */
+    public function get_account_suffix()
+    {
+          return $this->_account_suffix;
+    }
+    
+    /**
+    * Set the domain controllers array
+    * 
+    * @param array $_domain_controllers
+    * @return void
+    */
+    public function set_domain_controllers(array $_domain_controllers)
+    {
+          $this->_domain_controllers = $_domain_controllers;
+    }
+
+    /**
+    * Get the list of domain controllers
+    * 
+    * @return void
+    */
+    public function get_domain_controllers()
+    {
+          return $this->_domain_controllers;
+    }
+    
+    /**
+    * Set the username of an account with higher priviledges
+    * 
+    * @param string $_ad_username
+    * @return void
+    */
+    public function set_ad_username($_ad_username)
+    {
+          $this->_ad_username = $_ad_username;
+    }
+
+    /**
+    * Get the username of the account with higher priviledges
+    * 
+    * This will throw an exception for security reasons
+    */
+    public function get_ad_username()
+    {
+          throw new adLDAPException('For security reasons you cannot access the domain administrator account details');
+    }
+    
+    /**
+    * Set the password of an account with higher priviledges
+    * 
+    * @param string $_ad_password
+    * @return void
+    */
+    public function set_ad_password($_ad_password)
+    {
+          $this->_ad_password = $_ad_password;
+    }
+
+    /**
+    * Get the password of the account with higher priviledges
+    * 
+    * This will throw an exception for security reasons
+    */
+    public function get_ad_password()
+    {
+          throw new adLDAPException('For security reasons you cannot access the domain administrator account details');
+    }
+    
+    /**
+    * Set whether to detect the true primary group
+    * 
+    * @param bool $_real_primary_group
+    * @return void
+    */
+    public function set_real_primarygroup($_real_primarygroup)
+    {
+          $this->_real_primarygroup = $_real_primarygroup;
+    }
+
+    /**
+    * Get the real primary group setting
+    * 
+    * @return bool
+    */
+    public function get_real_primarygroup()
+    {
+          return $this->_real_primarygroup;
+    }
+    
+    /**
+    * Set whether to use SSL
+    * 
+    * @param bool $_use_ssl
+    * @return void
+    */
+    public function set_use_ssl($_use_ssl)
+    {
+          $this->_use_ssl = $_use_ssl;
+    }
+
+    /**
+    * Get the SSL setting
+    * 
+    * @return bool
+    */
+    public function get_use_ssl()
+    {
+          return $this->_use_ssl;
+    }
+    
+    /**
+    * Set whether to lookup recursive groups
+    * 
+    * @param bool $_recursive_groups
+    * @return void
+    */
+    public function set_recursive_groups($_recursive_groups)
+    {
+          $this->_recursive_groups = $_recursive_groups;
+    }
+
+    /**
+    * Get the recursive groups setting
+    * 
+    * @return bool
+    */
+    public function get_recursive_groups()
+    {
+          return $this->_recursive_groups;
+    }
 
     /**
     * Default Constructor
@@ -151,6 +302,24 @@ class adLDAP {
             if (array_key_exists("recursive_groups",$options)){ $this->_recursive_groups=$options["recursive_groups"]; }
         }
 
+        return $this->connect();
+    }
+
+    /**
+    * Default Destructor
+    * 
+    * Closes the LDAP connection
+    * 
+    * @return void
+    */
+    function __destruct(){ $this->close(); }
+
+    /**
+    * Connects and Binds to the Domain Controller
+    * 
+    * @return bool
+    */
+    public function connect() {
         // Connect to the AD/LDAP server as the username/password
         $dc=$this->random_controller();
         if ($this->_use_ssl){
@@ -178,15 +347,15 @@ class adLDAP {
         
         return (true);
     }
-
+    
     /**
-    * Default Destructor
-    * 
     * Closes the LDAP connection
     * 
     * @return void
     */
-    function __destruct(){ ldap_close ($this->_conn); }
+    public function close() {
+        ldap_close ($this->_conn);
+    }
 
     /**
     * Validate a user's login credentials
