@@ -101,12 +101,20 @@ class adLDAP {
 	protected $_real_primarygroup=true;
 	
     /**
-    * Use SSL, your server needs to be setup, please see
+    * Use SSL (LDAPS), your server needs to be setup, please see
     * http://adldap.sourceforge.net/wiki/doku.php?id=ldap_over_ssl
     * 
     * @var bool
     */
 	protected $_use_ssl=false;
+    
+    /**
+    * Use TLS
+    * If you wish to use TLS you should ensure that $_use_ssl is set to false and vice-versa
+    * 
+    * @var bool
+    */
+    protected $_use_tls=false;
     
     /**
     * When querying group memberships, do it recursively 
@@ -260,6 +268,27 @@ class adLDAP {
     }
     
     /**
+    * Set whether to use TLS
+    * 
+    * @param bool $_use_tls
+    * @return void
+    */
+    public function set_use_tls($_use_tls)
+    {
+          $this->_use_tls = $_use_tls;
+    }
+
+    /**
+    * Get the TLS setting
+    * 
+    * @return bool
+    */
+    public function get_use_tls()
+    {
+          return $this->_use_tls;
+    }
+    
+    /**
     * Set whether to lookup recursive groups
     * 
     * @param bool $_recursive_groups
@@ -299,6 +328,7 @@ class adLDAP {
             if (array_key_exists("ad_password",$options)){ $this->_ad_password=$options["ad_password"]; }
             if (array_key_exists("real_primarygroup",$options)){ $this->_real_primarygroup=$options["real_primarygroup"]; }
             if (array_key_exists("use_ssl",$options)){ $this->_use_ssl=$options["use_ssl"]; }
+            if (array_key_exists("use_tls",$options)){ $this->_use_tls=$options["use_tls"]; }
             if (array_key_exists("recursive_groups",$options)){ $this->_recursive_groups=$options["recursive_groups"]; }
         }
 
@@ -331,6 +361,10 @@ class adLDAP {
         // Set some ldap options for talking to AD
         ldap_set_option($this->_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
         ldap_set_option($this->_conn, LDAP_OPT_REFERRALS, 0);
+        
+        if ($this->_use_tls) {
+            ldap_start_tls($this->_conn);
+        }
         
         // Bind as a domain admin if they've set it up
         if ($this->_ad_username!=NULL && $this->_ad_password!=NULL){
