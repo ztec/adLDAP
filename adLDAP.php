@@ -370,7 +370,7 @@ class adLDAP {
         if ($this->_ad_username!=NULL && $this->_ad_password!=NULL){
             $this->_bind = @ldap_bind($this->_conn,$this->_ad_username.$this->_account_suffix,$this->_ad_password);
             if (!$this->_bind){
-                if ($this->_use_ssl){
+                if ($this->_use_ssl && !$this->_use_tls){
                     // If you have problems troubleshooting, remove the @ character from the ldap_bind command above to get the actual error message
                     throw new adLDAPException('Bind to Active Directory failed. Either the LDAPs connection failed or the login credentials are incorrect. AD said: ' . $this->get_last_error());
                 } else {
@@ -766,7 +766,7 @@ class adLDAP {
         if (!array_key_exists("container",$attributes)){ return ("Missing compulsory field [container]"); }
         if (!is_array($attributes["container"])){ return ("Container attribute must be an array."); }
 
-        if (array_key_exists("password",$attributes) && !$this->_use_ssl){ 
+        if (array_key_exists("password",$attributes) && (!$this->_use_ssl && !$this->_use_tls)){ 
             throw new adLDAPException('SSL must be configured on your webserver and enabled in the class to set passwords.');
         }
 
@@ -976,7 +976,7 @@ class adLDAP {
         if ($username==NULL){ return (false); }
         if ($password==NULL){ return (false); }
         if (!$this->_bind){ return (false); }
-        if (!$this->_use_ssl){ 
+        if (!$this->_use_ssl && !$this->_use_tls){ 
             throw new adLDAPException('SSL must be configured on your webserver and enabled in the class to set passwords.');
         }
         
