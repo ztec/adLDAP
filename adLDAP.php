@@ -673,15 +673,17 @@ class adLDAP {
         $ret_groups=array();
         
         $groups=$this->group_info($group,array("memberof"));
-        $groups=$groups[0]["memberof"];
+        if (is_array($groups[0]["memberof"])) {
+            $groups=$groups[0]["memberof"];
 
-        if ($groups){
-            $group_names=$this->nice_names($groups);
-            $ret_groups=array_merge($ret_groups,$group_names); //final groups to return
-            
-            foreach ($group_names as $id => $group_name){
-                $child_groups=$this->recursive_groups($group_name);
-                $ret_groups=array_merge($ret_groups,$child_groups);
+            if ($groups){
+                $group_names=$this->nice_names($groups);
+                $ret_groups=array_merge($ret_groups,$group_names); //final groups to return
+                
+                foreach ($group_names as $id => $group_name){
+                    $child_groups=$this->recursive_groups($group_name);
+                    $ret_groups=array_merge($ret_groups,$child_groups);
+                }
             }
         }
 
