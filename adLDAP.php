@@ -1253,6 +1253,55 @@ class adLDAP {
         return ($entries);
     }
     
+    /**
+    * Check if a computer is in a group
+    * 
+    * @param string $computer_name The name of the computer
+    * @param string $group The group to check
+    * @param bool $recursive Whether to check recursively
+    * @return array
+    */
+    public function computer_ingroup($computer_name,$group,$recursive=NULL){
+        if ($computer_name===NULL){ return (false); }
+        if ($group===NULL){ return (false); }
+        if (!$this->_bind){ return (false); }
+        if ($recursive===NULL){ $recursive=$this->_recursive_groups; } // use the default option if they haven't set it
+
+        //get a list of the groups
+        $groups=$this->computer_groups($computer_name,array("memberof"),$recursive);
+
+        //return true if the specified group is in the group list
+        if (in_array($group,$groups)){ return (true); }
+
+        return (false);
+    }
+    
+    /**
+    * Get the groups a computer is in
+    * 
+    * @param string $computer_name The name of the computer
+    * @param bool $recursive Whether to check recursively
+    * @return array
+    */
+    public function computer_groups($computer_name,$recursive=NULL){
+        if ($computer_name===NULL){ return (false); }
+        if ($recursive===NULL){ $recursive=$this->_recursive_groups; } //use the default option if they haven't set it
+        if (!$this->_bind){ return (false); }
+
+        //search the directory for their information
+        $info=@$this->computer_info($computer_name,array("memberof","primarygroupid"));
+        $groups=$this->nice_names($info[0]["memberof"]); //presuming the entry returned is our guy (unique usernames)
+
+        if ($recursive === true){
+            foreach ($groups as $id => $group_name){
+              $extra_groups=$this->recursive_groups($group_name);
+              $groups=array_merge($groups,$extra_groups);
+            }
+        }
+
+        return ($groups);
+    }
+    
     //************************************************************************************************************
     // EXCHANGE FUNCTIONS
     
