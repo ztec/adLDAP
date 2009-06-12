@@ -1230,6 +1230,69 @@ class adLDAP {
         if ($sorted){ asort($users_array); }
         return ($users_array);
     }
+    
+    //*****************************************************************************************************************
+    // FOLDER FUNCTIONS
+    
+    /**
+    * Returns a folder listing for a specific OU
+    * See http://adldap.sourceforge.net/wiki/doku.php?id=api_folder_functions
+    * 
+    * @param array $folder_name An array to the OU you wish to list
+    * @param bool $recursive Recursively search sub folders
+    * @param bool $type Specify a type of object to search for
+    * @return array
+    */
+    public function folder_list($folder_name, $recursive = NULL, $type = NULL) {
+        if ($folder_name===NULL){ return (false); }
+        if (!is_array($folder_name)){ return ('[folder_name] must be an array'); }
+        if ($recursive===NULL){ $recursive=$this->_recursive_groups; } //use the default option if they haven't set it
+        if (!$this->_bind){ return (false); }
+        
+        $ou="OU=".implode(",OU=",$folder_name);
+
+        $filter = '(&';
+        if ($type !== NULL) {
+            switch ($type) {
+                case 'contact':
+                    $filter .= '(objectClass=contact)';
+                    break;
+                case 'contact':
+                    $filter .= '(objectClass=computer)';
+                    break;
+                case 'group':
+                    $filter .= '(objectClass=group)';
+                    break;
+                case 'folder':
+                    $filter .= '(objectClass=organizationalunit)';
+                    break;
+                default:
+                    $filter .= '(objectClass=user)';
+                    break;   
+            }
+        }
+        else {
+            $filter .= '(objectClass=*)';   
+        }
+        $filter .= '(!(distinguishedname=' . $ou . ',' . $this->_base_dn . ')))';
+
+        if ($recursive === true) {
+            $sr=ldap_search($this->_conn,$ou . ',' . $this->_base_dn, $filter, array('objectclass', 'distinguishedname', 'samaccountname'));
+            $entries = @ldap_get_entries($this->_conn, $sr);
+            if (is_array($entries)) {
+                return $entries;
+            }
+        }
+        else {
+            $sr=ldap_list($this->_conn,$ou . ',' . $this->_base_dn, $filter, array('objectclass', 'distinguishedname', 'samaccountname'));
+            $entries = @ldap_get_entries($this->_conn, $sr);
+            if (is_array($entries)) {
+                return $entries;
+            }
+        }
+        
+        return false;
+    }
 
     //*****************************************************************************************************************
     // COMPUTER FUNCTIONS
