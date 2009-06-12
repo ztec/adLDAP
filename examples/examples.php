@@ -114,4 +114,10 @@ if (0){
         echo $e; exit();   
     }
 }
+
+// list the contents of the Users OU
+if (0){
+    $result=$ldap->folder_list(array('Users'), false);
+    var_dump ($result);   
+}
 ?>
