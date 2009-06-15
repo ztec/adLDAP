@@ -17,6 +17,19 @@ include directives in the scripts.
 The examples should be pretty self explanatory. If you require more
 information, please visit http://adldap.sourceforge.net/
 
+-------------------
+
+For full API documentation see http://adldap.sourceforge.net/wiki/doku.php?id=api
+
+1.  Copy adLDAP.php to your server
+2.  Edit the configuring variables in the class itself if you so wish to
+3.  From your script add the following code
+
+require_once(dirname(__FILE__) . '/adLDAP.php');
+$adldap = new adLDAP();
+
+-------------------
+
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
