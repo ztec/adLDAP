@@ -674,6 +674,10 @@ class adLDAP {
         if ($group_name===NULL){ return (false); }
         if (!$this->_bind){ return (false); }
         
+        if (stristr($group_name, '+')) {
+            $group_name=stripslashes($group_name);   
+        }
+        
         $filter="(&(objectCategory=group)(name=".$this->ldap_slashes($group_name)."))";
         //echo ($filter."!!!<br>");
         if ($fields===NULL){ $fields=array("member","memberof","cn","description","distinguishedname","objectcategory","samaccountname"); }
