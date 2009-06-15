@@ -117,7 +117,7 @@ if (0){
 
 // list the contents of the Users OU
 if (0){
-    $result=$ldap->folder_list(array('Users'), false);
+    $result=$ldap->folder_list(array('Users'), ADLDAP_FOLDER, false);
     var_dump ($result);   
 }
 ?>
