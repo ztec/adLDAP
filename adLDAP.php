@@ -927,7 +927,7 @@ class adLDAP {
         if ($recursive===NULL){ $recursive=$this->_recursive_groups; } // Use the default option if they haven't set it
         
         // Get a list of the groups
-        $groups=$this->user_groups($username,array("memberof"),$recursive);
+        $groups=$this->user_groups($username,$recursive);
         
         // Return true if the specified group is in the group list
         if (in_array($group,$groups)){ return (true); }
