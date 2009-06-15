@@ -611,6 +611,54 @@ class adLDAP {
     }
     
     /**
+    * Return a list of groups in a group
+    * 
+    * @param string $group The group to query
+    * @param bool $recursive Recursively get groups
+    * @return array
+    */
+    public function groups_in_group($group, $recursive = NULL){
+        if (!$this->_bind){ return (false); }
+        if ($recursive===NULL){ $recursive=$this->_recursive_groups; } // Use the default option if they haven't set it 
+        
+        // Search the directory for the members of a group
+        $info=$this->group_info($group,array("member","cn"));
+        $groups=$info[0]["member"];
+        if (!is_array($groups)) {
+            return (false);   
+        }
+ 
+        $group_array=array();
+
+        for ($i=0; $i<$groups["count"]; $i++){ 
+             $filter="(&(objectCategory=group)(distinguishedName=".$this->ldap_slashes($groups[$i])."))";
+             $fields = array("samaccountname", "distinguishedname", "objectClass");
+             $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
+             $entries = ldap_get_entries($this->_conn, $sr);
+
+             // not a person, look for a group  
+             if ($entries['count'] == 0 && $recursive == true) {  
+                $filter="(&(objectCategory=group)(distinguishedName=".$this->ldap_slashes($groups[$i])."))";  
+                $fields = array("distinguishedname");  
+                $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);  
+                $entries = ldap_get_entries($this->_conn, $sr);  
+                if (!isset($entries[0]['distinguishedname'][0])) {
+                    continue;  
+                }
+                $sub_groups = $this->groups_in_group($entries[0]['distinguishedname'][0], $recursive);  
+                if (is_array($sub_groups)) {
+                    $group_array = array_merge($group_array, $sub_groups); 
+                    $group_array = array_unique($group_array);  
+                }
+                continue;  
+             } 
+
+             $group_array[] = $entries[0]['distinguishedname'][0];
+        }
+        return ($group_array);
+    }
+    
+    /**
     * Return a list of members in a group
     * 
     * @param string $group The group to query
