@@ -44,6 +44,8 @@ define ('ADLDAP_SECURITY_GLOBAL_GROUP', 268435456);
 define ('ADLDAP_DISTRIBUTION_GROUP', 268435457);
 define ('ADLDAP_SECURITY_LOCAL_GROUP', 536870912);
 define ('ADLDAP_DISTRIBUTION_LOCAL_GROUP', 536870913);
+define ('ADLDAP_FOLDER', 'OU');
+define ('ADLDAP_CONTAINER', 'CN');
 
 /**
 * Main adLDAP class
@@ -722,8 +724,12 @@ class adLDAP {
     public function search_groups($samaccounttype = ADLDAP_SECURITY_GLOBAL_GROUP, $include_desc = false, $search = "*", $sorted = true) {
         if (!$this->_bind){ return (false); }
         
+        $filter = '(&(objectCategory=group)';
+        if ($samaccounttype !== null) {
+            $filter .= '(samaccounttype='. $samaccounttype .')';
+        }
+        $filter .= '(cn='.$search.'))';
         // Perform the search and grab all their details
-        $filter = "(&(objectCategory=group)(samaccounttype=". $samaccounttype .")(cn=".$search."))";
         $fields=array("samaccountname","description");
         $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
         $entries = ldap_get_entries($this->_conn, $sr);
@@ -743,7 +749,7 @@ class adLDAP {
     }
     
     /**
-    * Returns a complete list of security groups in AD
+    * Returns a complete list of all groups in AD
     * 
     * @param bool $include_desc Whether to return a description
     * @param string $search Search parameters
@@ -751,6 +757,19 @@ class adLDAP {
     * @return array
     */
     public function all_groups($include_desc = false, $search = "*", $sorted = true){
+        $groups_array = $this->search_groups(null, $include_desc, $search, $sorted);
+        return ($groups_array);
+    }
+    
+    /**
+    * Returns a complete list of security groups in AD
+    * 
+    * @param bool $include_desc Whether to return a description
+    * @param string $search Search parameters
+    * @param bool $sorted Whether to sort the results
+    * @return array
+    */
+    public function all_security_groups($include_desc = false, $search = "*", $sorted = true){
         $groups_array = $this->search_groups(ADLDAP_SECURITY_GLOBAL_GROUP, $include_desc, $search, $sorted);
         return ($groups_array);
     }
@@ -1238,18 +1257,17 @@ class adLDAP {
     * Returns a folder listing for a specific OU
     * See http://adldap.sourceforge.net/wiki/doku.php?id=api_folder_functions
     * 
-    * @param array $folder_name An array to the OU you wish to list
+    * @param array $folder_name An array to the OU you wish to list. 
+    *                           If set to NULL will list the root, strongly recommended to set 
+    *                           $recursive to false in that instance!
+    * @param string $dn_type The type of record to list.  This can be ADLDAP_FOLDER or ADLDAP_CONTAINER.
     * @param bool $recursive Recursively search sub folders
     * @param bool $type Specify a type of object to search for
     * @return array
     */
-    public function folder_list($folder_name, $recursive = NULL, $type = NULL) {
-        if ($folder_name===NULL){ return (false); }
-        if (!is_array($folder_name)){ return ('[folder_name] must be an array'); }
+    public function folder_list($folder_name = NULL, $dn_type = ADLDAP_FOLDER, $recursive = NULL, $type = NULL) {
         if ($recursive===NULL){ $recursive=$this->_recursive_groups; } //use the default option if they haven't set it
         if (!$this->_bind){ return (false); }
-        
-        $ou="OU=".implode(",OU=",$folder_name);
 
         $filter = '(&';
         if ($type !== NULL) {
@@ -1257,14 +1275,20 @@ class adLDAP {
                 case 'contact':
                     $filter .= '(objectClass=contact)';
                     break;
-                case 'computer':
+                case 'contact':
                     $filter .= '(objectClass=computer)';
                     break;
                 case 'group':
                     $filter .= '(objectClass=group)';
                     break;
                 case 'folder':
-                    $filter .= '(objectClass=organizationalunit)';
+                    $filter .= '(objectClass=organizationalUnit)';
+                    break;
+                case 'container':
+                    $filter .= '(objectClass=container)';
+                    break;
+                case 'domain':
+                    $filter .= '(objectClass=builtinDomain)';
                     break;
                 default:
                     $filter .= '(objectClass=user)';
@@ -1274,17 +1298,27 @@ class adLDAP {
         else {
             $filter .= '(objectClass=*)';   
         }
-        $filter .= '(!(distinguishedname=' . $ou . ',' . $this->_base_dn . ')))';
+        // If the folder name is null then we will search the root level of AD
+        // This requires us to not have an OU= part, just the base_dn
+        $searchou = $this->_base_dn;
+        if (is_array($folder_name)) {
+            $ou = $dn_type . "=".implode("," . $dn_type . "=",$folder_name);
+            $filter .= '(!(distinguishedname=' . $ou . ',' . $this->_base_dn . ')))';
+            $searchou = $ou . ',' . $this->_base_dn;
+        }
+        else {
+            $filter .= '(!(distinguishedname=' . $this->_base_dn . ')))';
+        }
 
         if ($recursive === true) {
-            $sr=ldap_search($this->_conn,$ou . ',' . $this->_base_dn, $filter, array('objectclass', 'distinguishedname', 'samaccountname'));
+            $sr=ldap_search($this->_conn, $searchou, $filter, array('objectclass', 'distinguishedname', 'samaccountname'));
             $entries = @ldap_get_entries($this->_conn, $sr);
             if (is_array($entries)) {
                 return $entries;
             }
         }
         else {
-            $sr=ldap_list($this->_conn,$ou . ',' . $this->_base_dn, $filter, array('objectclass', 'distinguishedname', 'samaccountname'));
+            $sr=ldap_list($this->_conn, $searchou, $filter, array('objectclass', 'distinguishedname', 'samaccountname'));
             $entries = @ldap_get_entries($this->_conn, $sr);
             if (is_array($entries)) {
                 return $entries;
