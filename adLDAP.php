@@ -1005,17 +1005,11 @@ class adLDAP {
         
         if ($userinfo[0]['useraccountcontrol'][0] == '66048') {
             // Password does not expire
-            $status['message'] = 'doesnotexpire';
-            $status['expiryts'] = null;
-            $status['expiryformat'] = null;
-            return $status;
+            return "Does not expire";
         }
         if ($pwdlastset === '0') {
             // Password has already expired
-            $status['message'] = 'expired';
-            $status['expiryts'] = null;
-            $status['expiryformat'] = null;
-            return $status;
+            return "Password has expired";
         }
         
          // Password expiry in AD can be calculated from TWO values:
@@ -1049,10 +1043,7 @@ class adLDAP {
          // Unfortunately the maths involved are too big for PHP integers, so I've had to require
          // BCMath functions to work with arbitrary precision numbers.
          if (bcmod($maxpwdage, 4294967296) === '0') {
-            $status['message'] = 'noexpiry';
-            $status['expiryts'] = null;
-            $status['expiryformat'] = null;
-            return $status;
+            return "Domain does not expire passwords";
         }
         
         // Add maxpwdage and pwdlastset and we get password expiration time in Microsoft's
@@ -1060,7 +1051,6 @@ class adLDAP {
         $pwdexpire = bcsub($pwdlastset, $maxpwdage);
     
         // Convert MS's time to Unix time
-        $status['message'] = null;
         $status['expiryts'] = bcsub(bcdiv($pwdexpire, '10000000'), '11644473600');
         $status['expiryformat'] = date('Y-m-d H:i:s', bcsub(bcdiv($pwdexpire, '10000000'), '11644473600'));
         
