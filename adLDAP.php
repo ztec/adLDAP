@@ -988,6 +988,86 @@ class adLDAP {
     }
     
     /**
+    * Determine a user's password expiry date
+    * 
+    * @param string $username The username to query
+    * @requires bcmath http://www.php.net/manual/en/book.bc.php
+    * @return array
+    */
+    public function user_password_expiry($username) {
+        if ($username===NULL){ return ("Missing compulsory field [username]"); }
+        if (!$this->_bind){ return (false); }
+        if (!function_exists('bcmod')) { return ("Missing function support [bcmod] http://www.php.net/manual/en/book.bc.php"); };
+        
+        $userinfo = $this->user_info($username, array("pwdlastset", "useraccountcontrol"));
+        $pwdlastset = $userinfo[0]['pwdlastset'][0];
+        $status = array();
+        
+        if ($userinfo[0]['useraccountcontrol'][0] == '66048') {
+            // Password does not expire
+            $status['message'] = 'doesnotexpire';
+            $status['expiryts'] = null;
+            $status['expiryformat'] = null;
+            return $status;
+        }
+        if ($pwdlastset === '0') {
+            // Password has already expired
+            $status['message'] = 'expired';
+            $status['expiryts'] = null;
+            $status['expiryformat'] = null;
+            return $status;
+        }
+        
+         // Password expiry in AD can be calculated from TWO values:
+         //   - User's own pwdLastSet attribute: stores the last time the password was changed
+         //   - Domain's maxPwdAge attribute: how long passwords last in the domain
+         //
+         // Although Microsoft chose to use a different base and unit for time measurements.
+         // This function will convert them to Unix timestamps
+         $sr = ldap_read($this->_conn, $this->_base_dn, 'objectclass=*', array('maxPwdAge'));
+         if (!$sr) {
+             return false;
+         }
+         $info = ldap_get_entries($this->_conn, $sr);
+         $maxpwdage = $info[0]['maxpwdage'][0];
+         
+
+         // See MSDN: http://msdn.microsoft.com/en-us/library/ms974598.aspx
+         //
+         // pwdLastSet contains the number of 100 nanosecond intervals since January 1, 1601 (UTC), 
+         // stored in a 64 bit integer. 
+         //
+         // The number of seconds between this date and Unix epoch is 11644473600.
+         //
+         // maxPwdAge is stored as a large integer that represents the number of 100 nanosecond
+         // intervals from the time the password was set before the password expires.
+         //
+         // We also need to scale this to seconds but also this value is a _negative_ quantity!
+         //
+         // If the low 32 bits of maxPwdAge are equal to 0 passwords do not expire
+         //
+         // Unfortunately the maths involved are too big for PHP integers, so I've had to require
+         // BCMath functions to work with arbitrary precision numbers.
+         if (bcmod($maxpwdage, 4294967296) === '0') {
+            $status['message'] = 'noexpiry';
+            $status['expiryts'] = null;
+            $status['expiryformat'] = null;
+            return $status;
+        }
+        
+        // Add maxpwdage and pwdlastset and we get password expiration time in Microsoft's
+        // time units.  Because maxpwd age is negative we need to subtract it.
+        $pwdexpire = bcsub($pwdlastset, $maxpwdage);
+    
+        // Convert MS's time to Unix time
+        $status['message'] = null;
+        $status['expiryts'] = bcsub(bcdiv($pwdexpire, '10000000'), '11644473600');
+        $status['expiryformat'] = date('Y-m-d H:i:s', bcsub(bcdiv($pwdexpire, '10000000'), '11644473600'));
+        
+        return $status;
+    }
+    
+    /**
     * Modify a user
     * 
     * @param string $username The username to query
