@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 3.2
+ * Version 3.3
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -30,7 +30,7 @@
  * @copyright (c) 2006-2009 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision$
- * @version 3.2
+ * @version 3.3
  * @link http://adldap.sourceforge.net/
  */
 
@@ -333,6 +333,10 @@ class adLDAP {
             if (array_key_exists("use_tls",$options)){ $this->_use_tls=$options["use_tls"]; }
             if (array_key_exists("recursive_groups",$options)){ $this->_recursive_groups=$options["recursive_groups"]; }
         }
+        
+        if ($this->ldap_supported() === false) {
+            throw new adLDAPException('No LDAP support for PHP.  See: http://www.php.net/ldap');
+        }
 
         return $this->connect();
     }
@@ -367,7 +371,7 @@ class adLDAP {
         if ($this->_use_tls) {
             ldap_start_tls($this->_conn);
         }
-        
+               
         // Bind as a domain admin if they've set it up
         if ($this->_ad_username!=NULL && $this->_ad_password!=NULL){
             $this->_bind = @ldap_bind($this->_conn,$this->_ad_username.$this->_account_suffix,$this->_ad_password);
@@ -379,6 +383,10 @@ class adLDAP {
                     throw new adLDAPException('Bind to Active Directory failed. Check the login credentials and/or server details. AD said: ' . $this->get_last_error());
                 }
             }
+        }
+        
+        if ($this->_base_dn == NULL) {
+            $this->_base_dn = $this->find_base_dn();   
         }
         
         return (true);
@@ -1449,7 +1457,7 @@ class adLDAP {
         
         return false;
     }
-
+    
     //*****************************************************************************************************************
     // COMPUTER FUNCTIONS
     
@@ -1731,6 +1739,91 @@ class adLDAP {
         
         return (true);
     }
+    
+    /**
+    * Returns a list of Exchange Servers in the ConfigurationNamingContext of the domain
+    * 
+    * @param array $attributes An array of the AD attributes you wish to return
+    * @return array
+    */
+    public function exchange_servers($attributes = array('cn','distinguishedname','serialnumber')) {
+        if (!$this->_bind){ return (false); }
+        
+        $configurationNamingContext = $this->get_root_dse(array('configurationnamingcontext'));
+        $sr = @ldap_search($this->_conn,$configurationNamingContext[0]['configurationnamingcontext'][0],'(&(objectCategory=msExchExchangeServer))',$attributes);
+        $entries = @ldap_get_entries($this->_conn, $sr);
+        return $entries;
+    }
+    
+    /**
+    * Returns a list of Storage Groups in Exchange for a given mail server
+    * 
+    * @param string $exchangeServer The full DN of an Exchange server.  You can use exchange_servers() to find the DN for your server
+    * @param array $attributes An array of the AD attributes you wish to return
+    * @param bool $recursive If enabled this will automatically query the databases within a storage group
+    * @return array
+    */
+    public function exchange_storage_groups($exchangeServer, $attributes = array('cn','distinguishedname'), $recursive = NULL) {
+        if (!$this->_bind){ return (false); }
+        if ($exchangeServer===NULL){ return ("Missing compulsory field [exchangeServer]"); }
+        if ($recursive===NULL){ $recursive=$this->_recursive_groups; }
+
+        $filter = '(&(objectCategory=msExchStorageGroup))';
+        $sr=@ldap_search($this->_conn, $exchangeServer, $filter, $attributes);
+        $entries = @ldap_get_entries($this->_conn, $sr);
+
+        if ($recursive === true) {
+            for ($i=0; $i<$entries['count']; $i++) {
+                $entries[$i]['msexchprivatemdb'] = $this->exchange_storage_databases($entries[$i]['distinguishedname'][0]);       
+            }
+        }
+        
+        return $entries;
+    }
+    
+    /**
+    * Returns a list of Databases within any given storage group in Exchange for a given mail server
+    * 
+    * @param string $storageGroup The full DN of an Storage Group.  You can use exchange_storage_groups() to find the DN 
+    * @param array $attributes An array of the AD attributes you wish to return
+    * @return array
+    */
+    public function exchange_storage_databases($storageGroup, $attributes = array('cn','distinguishedname','displayname')) {
+        if (!$this->_bind){ return (false); }
+        if ($storageGroup===NULL){ return ("Missing compulsory field [storageGroup]"); }
+        
+        $filter = '(&(objectCategory=msExchPrivateMDB))';
+        $sr=@ldap_search($this->_conn, $storageGroup, $filter, $attributes);
+        $entries = @ldap_get_entries($this->_conn, $sr);
+        return $entries;
+    }
+    
+    //************************************************************************************************************
+    // SERVER FUNCTIONS
+    
+    /**
+    * Find the Base DN of your domain controller
+    * 
+    * @return string
+    */
+    public function find_base_dn() {
+        $namingContext = $this->get_root_dse(array('defaultnamingcontext'));   
+        return $namingContext[0]['defaultnamingcontext'][0];
+    }
+    
+    /**
+    * Get the RootDSE properties from a domain controller
+    * 
+    * @param array $attributes The attributes you wish to query e.g. defaultnamingcontext
+    * @return array
+    */
+    public function get_root_dse($attributes = array("*", "+")) {
+        if (!$this->_bind){ return (false); }
+        
+        $sr = @ldap_read($this->_conn, NULL, 'objectClass=*', $attributes);
+        $entries = @ldap_get_entries($this->_conn, $sr);
+        return $entries;
+    }
 
     //************************************************************************************************************
     // UTILITY FUNCTIONS (Many of these functions are protected and can only be called from within the class)
@@ -1746,6 +1839,18 @@ class adLDAP {
     */
     public function get_last_error() {
         return @ldap_error($this->_conn);
+    }
+    
+    /**
+    * Detect LDAP support in php
+    * 
+    * @return bool
+    */    
+    protected function ldap_supported() {
+        if (!function_exists('ldap_connect')) {
+            return (false);   
+        }
+        return (true);
     }
     
     /**
@@ -1807,6 +1912,8 @@ class adLDAP {
         if ($attributes["exchange_mailnickname"]){ $mod["mailNickname"][0]=$attributes["exchange_mailnickname"]; }
         if ($attributes["exchange_proxyaddress"]){ $mod["proxyAddresses"][0]=$attributes["exchange_proxyaddress"]; }
         if ($attributes["exchange_usedefaults"]){ $mod["mDBUseDefaults"][0]=$attributes["exchange_usedefaults"]; }
+        if ($attributes["exchange_policyexclude"]){ $mod["msExchPoliciesExcluded"][0]=$attributes["exchange_policyexclude"]; }
+        if ($attributes["exchange_policyinclude"]){ $mod["msExchPoliciesIncluded"][0]=$attributes["exchange_policyinclude"]; }
         
         // This schema is designed for contacts
         if ($attributes["exchange_hidefromlists"]){ $mod["msExchHideFromAddressLists"][0]=$attributes["exchange_hidefromlists"]; }
