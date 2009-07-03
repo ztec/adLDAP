@@ -13,6 +13,9 @@ Version 3.3
 
 [+] New feature: Calling adLDAP without LDAP support in PHP will now throw an adLDAPException
 [+] New feature: Specifying a NULL $_base_dn will now automatically attempt to detect the base_dn from your domain controller
+[+] New feature: Most user objects can now be queried using a user's GUID as well as their username (samAccountName).  Set the $isGUID optional parameter to true. To obtain a user's GUID either use the username2guid() function or decodeGuid()
+[+] New function: username2guid($username) will return a string representation of the GUID for a given username
+[+] New function: decodeGuid($binaryGuid) will convert a binary GUID to a string
 [+] New function: find_base_dn() will return the base_dn from your domain controller
 [+] New function: get_root_dse($attributes) will return root domain controller configuration attributes such as the default naming context, current DC time, etc
 [+] New function: exchange_servers($attributes) will return a list of Exchange servers in your domain
