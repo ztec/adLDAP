@@ -464,14 +464,15 @@ class adLDAP {
     * 
     * @param string $group The group to add the user to
     * @param string $user The user to add to the group
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function group_add_user($group,$user){
+    public function group_add_user($group,$user,$isGUID=false){
         // Adding a user is a bit fiddly, we need to get the full DN of the user
         // and add it using the full DN of the group
         
         // Find the user's dn
-        $user_dn=$this->user_dn($user);
+        $user_dn=$this->user_dn($user,$isGUID);
         if ($user_dn===false){ return (false); }
         
         // Find the group's dn
@@ -575,9 +576,10 @@ class adLDAP {
     * 
     * @param string $group The group to remove a user from
     * @param string $user The AD user to remove from the group
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function group_del_user($group,$user){
+    public function group_del_user($group,$user,$isGUID=false){
     
         // Find the parent dn
         $group_info=$this->group_info($group,array("cn"));
@@ -585,7 +587,7 @@ class adLDAP {
         $group_dn=$group_info[0]["dn"];
         
         // Find the users dn
-        $user_dn=$this->user_dn($user);
+        $user_dn=$this->user_dn($user,$isGUID);
         if ($user_dn===false){ return (false); }
 
         $del=array();
@@ -906,10 +908,11 @@ class adLDAP {
     * Delete a user account
     * 
     * @param string $username The username to delete (please be careful here!)
+    * @param bool $isGUID Is the username a GUID or a samAccountName
     * @return array
     */
-    public function user_delete($username) {      
-        $userinfo = $this->user_info($username, array("*"));
+    public function user_delete($username,$isGUID=false) {      
+        $userinfo = $this->user_info($username, array("*"),$isGUID);
         $dn = $userinfo[0]['distinguishedname'][0];
         $result=$this->dn_delete($dn);
         if ($result!=true){ return (false); }        
@@ -921,15 +924,16 @@ class adLDAP {
     * 
     * @param string $username The username to query
     * @param bool $recursive Recursive list of groups
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return array
     */
-    public function user_groups($username,$recursive=NULL){
+    public function user_groups($username,$recursive=NULL,$isGUID=false){
         if ($username===NULL){ return (false); }
         if ($recursive===NULL){ $recursive=$this->_recursive_groups; } // Use the default option if they haven't set it
         if (!$this->_bind){ return (false); }
         
         // Search the directory for their information
-        $info=@$this->user_info($username,array("memberof","primarygroupid"));
+        $info=@$this->user_info($username,array("memberof","primarygroupid"),$isGUID);
         $groups=$this->nice_names($info[0]["memberof"]); // Presuming the entry returned is our guy (unique usernames)
 
         if ($recursive === true){
@@ -947,13 +951,20 @@ class adLDAP {
     * 
     * @param string $username The username to query
     * @param array $fields Array of parameters to query
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return array
     */
-    public function user_info($username,$fields=NULL){
+    public function user_info($username,$fields=NULL,$isGUID=false){
         if ($username===NULL){ return (false); }
         if (!$this->_bind){ return (false); }
 
-        $filter="samaccountname=".$username;
+        if ($isGUID === true) {
+            $username = $this->strguid2hex($username);
+            $filter="objectguid=".$username;
+        }
+        else {
+            $filter="samaccountname=".$username;
+        }
         if ($fields===NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid","objectsid"); }
         $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
         $entries = ldap_get_entries($this->_conn, $sr);
@@ -978,16 +989,17 @@ class adLDAP {
     * @param string $username The username to query
     * @param string $group The name of the group to check against
     * @param bool $recursive Check groups recursively
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function user_ingroup($username,$group,$recursive=NULL){
+    public function user_ingroup($username,$group,$recursive=NULL,$isGUID=false){
         if ($username===NULL){ return (false); }
         if ($group===NULL){ return (false); }
         if (!$this->_bind){ return (false); }
         if ($recursive===NULL){ $recursive=$this->_recursive_groups; } // Use the default option if they haven't set it
         
         // Get a list of the groups
-        $groups=$this->user_groups($username,$recursive);
+        $groups=$this->user_groups($username,$recursive,$isGUID);
         
         // Return true if the specified group is in the group list
         if (in_array($group,$groups)){ return (true); }
@@ -999,15 +1011,16 @@ class adLDAP {
     * Determine a user's password expiry date
     * 
     * @param string $username The username to query
+    * @param book $isGUID Is the username passed a GUID or a samAccountName
     * @requires bcmath http://www.php.net/manual/en/book.bc.php
     * @return array
     */
-    public function user_password_expiry($username) {
+    public function user_password_expiry($username,$isGUID=false) {
         if ($username===NULL){ return ("Missing compulsory field [username]"); }
         if (!$this->_bind){ return (false); }
         if (!function_exists('bcmod')) { return ("Missing function support [bcmod] http://www.php.net/manual/en/book.bc.php"); };
         
-        $userinfo = $this->user_info($username, array("pwdlastset", "useraccountcontrol"));
+        $userinfo = $this->user_info($username, array("pwdlastset", "useraccountcontrol"), $isGUID);
         $pwdlastset = $userinfo[0]['pwdlastset'][0];
         $status = array();
         
@@ -1070,20 +1083,17 @@ class adLDAP {
     * 
     * @param string $username The username to query
     * @param array $attributes The attributes to modify.  Note if you set the enabled attribute you must not specify any other attributes
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function user_modify($username,$attributes){
+    public function user_modify($username,$attributes,$isGUID=false){
         if ($username===NULL){ return ("Missing compulsory field [username]"); }
         if (array_key_exists("password",$attributes) && !$this->_use_ssl){ 
             throw new adLDAPException('SSL must be configured on your webserver and enabled in the class to set passwords.');
         }
-        //if (array_key_exists("container",$attributes)){
-            //if (!is_array($attributes["container"])){ return ("Container attribute must be an array."); }
-            //$attributes["container"]=array_reverse($attributes["container"]);
-        //}
 
         // Find the dn of the user
-        $user_dn=$this->user_dn($username);
+        $user_dn=$this->user_dn($username,$isGUID);
         if ($user_dn===false){ return (false); }
         
         // Translate the update to the LDAP schema                
@@ -1110,12 +1120,13 @@ class adLDAP {
     * Disable a user account
     * 
     * @param string $username The username to disable
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function user_disable($username){
+    public function user_disable($username,$isGUID=false){
         if ($username===NULL){ return ("Missing compulsory field [username]"); }
         $attributes=array("enabled"=>0);
-        $result = $this->user_modify($username, $attributes);
+        $result = $this->user_modify($username, $attributes, $isGUID);
         if ($result==false){ return (false); }
         
         return (true);
@@ -1125,12 +1136,13 @@ class adLDAP {
     * Enable a user account
     * 
     * @param string $username The username to enable
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function user_enable($username){
+    public function user_enable($username,$isGUID=false){
         if ($username===NULL){ return ("Missing compulsory field [username]"); }
         $attributes=array("enabled"=>1);
-        $result = $this->user_modify($username, $attributes);
+        $result = $this->user_modify($username, $attributes, $isGUID);
         if ($result==false){ return (false); }
         
         return (true);
@@ -1141,9 +1153,10 @@ class adLDAP {
     * 
     * @param string $username The username to modify
     * @param string $password The new password
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function user_password($username,$password){
+    public function user_password($username,$password,$isGUID=false){
         if ($username===NULL){ return (false); }
         if ($password===NULL){ return (false); }
         if (!$this->_bind){ return (false); }
@@ -1151,7 +1164,7 @@ class adLDAP {
             throw new adLDAPException('SSL must be configured on your webserver and enabled in the class to set passwords.');
         }
         
-        $user_dn=$this->user_dn($username);
+        $user_dn=$this->user_dn($username,$isGUID);
         if ($user_dn===false){ return (false); }
                 
         $add=array();
@@ -1192,6 +1205,30 @@ class adLDAP {
         }
         if ($sorted){ asort($users_array); }
         return ($users_array);
+    }
+    
+    /**
+    * Converts a username (samAccountName) to a GUID
+    * 
+    * @param string $username The username to query
+    * @return string
+    */
+    public function username2guid($username) {
+        if (!$this->_bind){ return (false); }
+        if ($username === null){ return ("Missing compulsory field [username]"); }
+        
+        $filter = "samaccountname=" . $username; 
+        $fields = array("objectGUID"); 
+        $sr = @ldap_search($this->_conn, $this->_base_dn, $filter, $fields); 
+        if (ldap_count_entries($this->_conn, $sr) > 0) { 
+            $entry = @ldap_first_entry($this->_conn, $sr); 
+            $guid = @ldap_get_values_len($this->_conn, $entry, 'objectGUID'); 
+            $strGUID = $this->binary2text($guid[0]);          
+            return ($strGUID); 
+        }
+        else { 
+            return (false); 
+        } 
     }
     
     //*****************************************************************************************************************
@@ -1541,10 +1578,11 @@ class adLDAP {
     * @param string $emailaddress The primary email address to add to this user
     * @param string $mailnickname The mail nick name.  If mail nickname is blank, the username will be used
     * @param bool $usedefaults Indicates whether the store should use the default quota, rather than the per-mailbox quota.
-    * @param string $base_dn Specify an alternative base_dn for the Exchange storage grop
+    * @param string $base_dn Specify an alternative base_dn for the Exchange storage group
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function exchange_create_mailbox($username, $storagegroup, $emailaddress, $mailnickname=NULL, $usedefaults=TRUE, $base_dn=NULL){
+    public function exchange_create_mailbox($username, $storagegroup, $emailaddress, $mailnickname=NULL, $usedefaults=TRUE, $base_dn=NULL, $isGUID=false){
         if ($username===NULL){ return ("Missing compulsory field [username]"); }     
         if ($storagegroup===NULL){ return ("Missing compulsory array [storagegroup]"); }
         if (!is_array($storagegroup)){ return ("[storagegroup] must be an array"); }
@@ -1565,7 +1603,7 @@ class adLDAP {
             'exchange_mailnickname'=>$mailnickname,
             'exchange_usedefaults'=>$mdbUseDefaults
         );
-        $result = $this->user_modify($username,$attributes);
+        $result = $this->user_modify($username,$attributes,$isGUID);
         if ($result==false){ return (false); }
         return (true);
     }
@@ -1576,9 +1614,10 @@ class adLDAP {
     * @param string $username The username of the user to add the Exchange account to
     * @param string $emailaddress The email address to add to this user
     * @param bool $default Make this email address the default address, this is a bit more intensive as we have to demote any existing default addresses
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function exchange_add_address($username, $emailaddress, $default=FALSE) {
+    public function exchange_add_address($username, $emailaddress, $default=FALSE, $isGUID=false) {
         if ($username===NULL){ return ("Missing compulsory field [username]"); }     
         if ($emailaddress===NULL) { return ("Missing compulsory fields [emailaddress]"); }
         
@@ -1588,7 +1627,7 @@ class adLDAP {
         }
               
         // Find the dn of the user
-        $user=$this->user_info($username,array("cn","proxyaddresses"));
+        $user=$this->user_info($username,array("cn","proxyaddresses"),$isGUID);
         if ($user[0]["dn"]===NULL){ return (false); }
         $user_dn=$user[0]["dn"];
         
@@ -1636,14 +1675,15 @@ class adLDAP {
     * 
     * @param string $username The username of the user to add the Exchange account to
     * @param string $emailaddress The email address to add to this user
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function exchange_del_address($username, $emailaddress) {
+    public function exchange_del_address($username, $emailaddress, $isGUID=false) {
         if ($username===NULL){ return ("Missing compulsory field [username]"); }     
         if ($emailaddress===NULL) { return ("Missing compulsory fields [emailaddress]"); }
         
         // Find the dn of the user
-        $user=$this->user_info($username,array("cn","proxyaddresses"));
+        $user=$this->user_info($username,array("cn","proxyaddresses"),$isGUID);
         if ($user[0]["dn"]===NULL){ return (false); }
         $user_dn=$user[0]["dn"];
         
@@ -1672,14 +1712,15 @@ class adLDAP {
     * 
     * @param string $username The username of the user to add the Exchange account to
     * @param string $emailaddress The email address to make default
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return bool
     */
-    public function exchange_primary_address($username, $emailaddress) {
+    public function exchange_primary_address($username, $emailaddress, $isGUID=false) {
         if ($username===NULL){ return ("Missing compulsory field [username]"); }     
         if ($emailaddress===NULL) { return ("Missing compulsory fields [emailaddress]"); }
         
         // Find the dn of the user
-        $user=$this->user_info($username,array("cn","proxyaddresses"));
+        $user=$this->user_info($username,array("cn","proxyaddresses"), $isGUID);
         if ($user[0]["dn"]===NULL){ return (false); }
         $user_dn=$user[0]["dn"];
         
@@ -2024,16 +2065,82 @@ class adLDAP {
         }
         return $result;
      }
+     
+    /**
+    * Converts a binary attribute to a string
+    * 
+    * @param string $bin A binary LDAP attribute
+    * @return string
+    */
+    protected function binary2text($bin) {
+        $hex_guid = bin2hex($bin); 
+        $hex_guid_to_guid_str = ''; 
+        for($k = 1; $k <= 4; ++$k) { 
+            $hex_guid_to_guid_str .= substr($hex_guid, 8 - 2 * $k, 2); 
+        } 
+        $hex_guid_to_guid_str .= '-'; 
+        for($k = 1; $k <= 2; ++$k) { 
+            $hex_guid_to_guid_str .= substr($hex_guid, 12 - 2 * $k, 2); 
+        } 
+        $hex_guid_to_guid_str .= '-'; 
+        for($k = 1; $k <= 2; ++$k) { 
+            $hex_guid_to_guid_str .= substr($hex_guid, 16 - 2 * $k, 2); 
+        } 
+        $hex_guid_to_guid_str .= '-' . substr($hex_guid, 16, 4); 
+        $hex_guid_to_guid_str .= '-' . substr($hex_guid, 20); 
+        return strtoupper($hex_guid_to_guid_str);   
+    }
+    
+    /**
+    * Converts a binary GUID to a string GUID
+    * 
+    * @param string $binaryGuid The binary GUID attribute to convert
+    * @return string
+    */
+    public function decodeGuid($binaryGuid) {
+        if ($binaryGuid === null){ return ("Missing compulsory field [binaryGuid]"); }
+        
+        $strGUID = $this->binary2text($binaryGuid);          
+        return ($strGUID); 
+    }
+     
+    /**
+    * Converts a string GUID to a hexdecimal value so it can be queried
+    * 
+    * @param string $strGUID A string representation of a GUID
+    * @return string
+    */
+    protected function strguid2hex($strGUID) {
+        $strGUID = str_replace('-', '', $strGUID);
+
+        $octet_str = '\\' . substr($strGUID, 6, 2);
+        $octet_str .= '\\' . substr($strGUID, 4, 2);
+        $octet_str .= '\\' . substr($strGUID, 2, 2);
+        $octet_str .= '\\' . substr($strGUID, 0, 2);
+        $octet_str .= '\\' . substr($strGUID, 10, 2);
+        $octet_str .= '\\' . substr($strGUID, 8, 2);
+        $octet_str .= '\\' . substr($strGUID, 14, 2);
+        $octet_str .= '\\' . substr($strGUID, 12, 2);
+        //$octet_str .= '\\' . substr($strGUID, 16, strlen($strGUID));
+        for ($i=16; $i<=(strlen($strGUID)-2); $i++) {
+            if (($i % 2) == 0) {
+                $octet_str .= '\\' . substr($strGUID, $i, 2);
+            }
+        }
+        
+        return $octet_str;
+    }
     
     /**
     * Obtain the user's distinguished name based on their userid 
     * 
     * 
     * @param string $username The username
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
     * @return string
     */
-    protected function user_dn($username){
-        $user=$this->user_info($username,array("cn"));
+    protected function user_dn($username,$isGUID=false){
+        $user=$this->user_info($username,array("cn"),$isGUID);
         if ($user[0]["dn"]===NULL){ return (false); }
         $user_dn=$user[0]["dn"];
         return ($user_dn);
