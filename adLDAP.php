@@ -1442,7 +1442,7 @@ class adLDAP {
                 case 'contact':
                     $filter .= '(objectClass=contact)';
                     break;
-                case 'contact':
+                case 'computer':
                     $filter .= '(objectClass=computer)';
                     break;
                 case 'group':
