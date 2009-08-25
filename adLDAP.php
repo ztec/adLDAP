@@ -1609,6 +1609,48 @@ class adLDAP {
     }
     
     /**
+    * Add an X400 address to Exchange
+    * See http://tools.ietf.org/html/rfc1685 for more information.
+    * An X400 Address looks similar to this X400:c=US;a= ;p=Domain;o=Organization;s=Doe;g=John;
+    * 
+    * @param string $username The username of the user to add the X400 to to
+    * @param string $country Country
+    * @param string $admd Administration Management Domain
+    * @param string $pdmd Private Management Domain (often your AD domain)
+    * @param string $org Organization
+    * @param string $surname Surname
+    * @param string $givenName Given name
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
+    * @return bool
+    */
+    public function exchange_add_X400($username, $country, $admd, $pdmd, $org, $surname, $givenname, $isGUID=false) {
+        if ($username===NULL){ return ("Missing compulsory field [username]"); }     
+        
+        $proxyvalue = 'X400:';
+            
+        // Find the dn of the user
+        $user=$this->user_info($username,array("cn","proxyaddresses"), $isGUID);
+        if ($user[0]["dn"]===NULL){ return (false); }
+        $user_dn=$user[0]["dn"];
+        
+        // We do not have to demote an email address from the default so we can just add the new proxy address
+        $attributes['exchange_proxyaddress'] = $proxyvalue . 'c=' . $country . ';a=' . $admd . ';p=' . $pdmd . ';o=' . $org . ';s=' . $surname . ';g=' . $givenname . ';';
+       
+        // Translate the update to the LDAP schema                
+        $add=$this->adldap_schema($attributes);
+        
+        if (!$add){ return (false); }
+        
+        // Do the update
+        // Take out the @ to see any errors, usually this error might occur because the address already
+        // exists in the list of proxyAddresses
+        $result=@ldap_mod_add($this->_conn,$user_dn,$add);
+        if ($result==false){ return (false); }
+        
+        return (true);
+    }
+    
+    /**
     * Add an address to Exchange
     * 
     * @param string $username The username of the user to add the Exchange account to
