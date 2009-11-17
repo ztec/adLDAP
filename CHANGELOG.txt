@@ -22,6 +22,7 @@ Version 3.3
 [+] New function: exchange_storage_groups($exchangeServer, $attributes, $recursive) will return a list of Storage groups on any given Exchange server.  Setting $recursive to true (or inheriting from the $_recursive_groups setting will automatically query the databases within a storage group)
 [+] New function: exchange_storage_databases($storageGroup, $attributes) will return a list of Databases in any given storage group on any given Exchange server
 [+] New function: exchange_add_X400($username, $country, $admd, $pdmd, $org, $surname, $givenname, $isGUID=false) will add an X400 address to the Exchange server
+[-] Bug fix: Null comparison error in contact_mailenable()
 
 Version 3.2
 -----------
