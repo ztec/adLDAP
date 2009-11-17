@@ -1799,7 +1799,7 @@ class adLDAP {
     */
     public function exchange_contact_mailenable($distinguishedname, $emailaddress, $mailnickname=NULL){
         if ($distinguishedname===NULL){ return ("Missing compulsory field [distinguishedname]"); }   
-        if ($emailaddress==-NULL){ return ("Missing compulsory field [emailaddress]"); }  
+        if ($emailaddress===NULL){ return ("Missing compulsory field [emailaddress]"); }  
         
         if ($mailnickname !== NULL) {
             // Find the dn of the user
