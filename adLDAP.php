@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 3.3
+ * Version 3.3.1
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -30,7 +30,7 @@
  * @copyright (c) 2006-2009 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision$
- * @version 3.3
+ * @version 3.3.1
  * @link http://adldap.sourceforge.net/
  */
 
@@ -412,6 +412,7 @@ class adLDAP {
     public function authenticate($username,$password,$prevent_rebind=false){
         // Prevent null binding
         if ($username===NULL || $password===NULL){ return (false); } 
+        if (empty($username) || empty($password)){ return (false); }
         
         // Bind as the user        
         $this->_bind = @ldap_bind($this->_conn,$username.$this->_account_suffix,$password);
