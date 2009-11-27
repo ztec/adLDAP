@@ -8,6 +8,10 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
+Version 3.3.1
+-------------
+[-] Bug fix: Prevent empty $username and $password in authenticate from falling through to the default administrator login
+
 Version 3.3
 -----------
 
