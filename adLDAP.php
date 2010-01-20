@@ -758,7 +758,7 @@ class adLDAP {
         $ret_groups=array();
         
         $groups=$this->group_info($group,array("memberof"));
-        if (is_array($groups[0]["memberof"])) {
+        if (isset($groups[0]["memberof"]) && is_array($groups[0]["memberof"])) {
             $groups=$groups[0]["memberof"];
 
             if ($groups){
