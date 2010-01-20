@@ -10,6 +10,7 @@ CHANGELOG
 
 Trunk Commits
 -------------
+[+] New feature: Move the user to a new OU using user_move() function
 [-] Bug fix: Prevent an 'undefined index' error in recursive_groups() when full PHP E_ALL logging is enabled
 [-] Bug fix: user_groups() does not return primary group when objectsid is not given (Tracker ID:2931213)
 [-] Bug fix: Undefined index in function user_info for non-existent users (Tracker ID:2922729)

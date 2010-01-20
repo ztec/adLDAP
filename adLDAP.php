@@ -1237,6 +1237,33 @@ class adLDAP {
         } 
     }
     
+    /**
+    * Move a user account to a different OU
+    *
+    * @param string $username The username to move (please be careful here!)
+    * @param array $container The container or containers to move the user to (please be careful here!).
+    * accepts containers in 1. parent 2. child order
+    * @return array
+    */
+    public function user_move($username, $container) {
+        if (!$this->_bind){ return (false); }
+        if ($username === null){ return ("Missing compulsory field [username]"); }
+        if ($container === null){ return ("Missing compulsory field [container]"); }
+        if (!is_array($container)){ return ("Container must be an array"); }
+        
+        $userinfo = $this->user_info($username, array("*"));
+        $dn = $userinfo[0]['distinguishedname'][0];
+        $newrdn = "cn=" . $username;
+        $container = array_reverse($container);
+        $newcontainer = "ou=" . implode(",ou=",$container);
+        $newbasedn = strtolower($newcontainer) . "," . $this->_base_dn;
+        $result=@ldap_rename($this->_conn,$dn,$newrdn,$newbasedn,true);
+        if ($result !== true) {
+            return (false);
+        }
+        return (true);
+    }
+    
     //*****************************************************************************************************************
     // CONTACT FUNCTIONS
     // * Still work to do in this area, and new functions to write
