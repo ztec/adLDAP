@@ -11,6 +11,7 @@ CHANGELOG
 Trunk Commits
 -------------
 [-] Bug fix: Prevent an 'undefined index' error in recursive_groups() when full PHP E_ALL logging is enabled
+[-] Bug fix: user_groups() does not return primary group when objectsid is not given (Tracker ID:2931213)
 
 Version 3.3.1
 -------------

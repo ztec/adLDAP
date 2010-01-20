@@ -755,7 +755,7 @@ class adLDAP {
     public function recursive_groups($group){
         if ($group===NULL){ return (false); }
 
-        $ret_groups=array();
+        $ret_groups=array();          
         
         $groups=$this->group_info($group,array("memberof"));
         if (isset($groups[0]["memberof"]) && is_array($groups[0]["memberof"])) {
@@ -967,6 +967,9 @@ class adLDAP {
             $filter="samaccountname=".$username;
         }
         if ($fields===NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid","objectsid"); }
+        if (!in_array("objectsid",$fields)){
+            $fields[] = "objectsid";
+        }
         $sr=ldap_search($this->_conn,$this->_base_dn,$filter,$fields);
         $entries = ldap_get_entries($this->_conn, $sr);
         
