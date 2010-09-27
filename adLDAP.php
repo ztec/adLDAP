@@ -862,7 +862,7 @@ class adLDAP {
     * @param array $attributes The attributes to set to the user account
     * @return bool
     */
-    public function user_create($attributes){
+        public function user_create($attributes){
         // Check for compulsory fields
         if (!array_key_exists("username",$attributes)){ return ("Missing compulsory field [username]"); }
         if (!array_key_exists("firstname",$attributes)){ return ("Missing compulsory field [firstname]"); }
