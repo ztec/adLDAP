@@ -19,6 +19,7 @@ Trunk Commits
 [-] Bug fix: user_info, checks for for a "count" value that not exist in $entries array if "memberof" isn't passed in $fields array. (Tracker ID:2993172)
 [-] Bug fix: In authenticate() if user authentication fails function returns and does not rebind with admin credentials - so the other funcions don't work anymore as $this->_bind === false. (Tracker ID:2987887)
 [-] Bug fix: When calling $ldap->user_modify('user', array("expires"=>0)) the function fails due to the value being 0. Changed to isset (Tracker ID:3036726)
+[-] Bug fix: When calling user_info allow the username to be either a sAMAccountName or userPrincipalName attribute
 
 
 Version 3.3.1
