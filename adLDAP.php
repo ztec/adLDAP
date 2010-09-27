@@ -966,6 +966,7 @@ class adLDAP {
         else {
             $filter="samaccountname=".$username;
         }
+        $filter = "(&(objectCategory=person)({$filter}))";
         if ($fields===NULL){ $fields=array("samaccountname","mail","memberof","department","displayname","telephonenumber","primarygroupid","objectsid"); }
         if (!in_array("objectsid",$fields)){
             $fields[] = "objectsid";
