@@ -409,25 +409,26 @@ class adLDAP {
     * @param bool optional $prevent_rebind
     * @return bool
     */
-    public function authenticate($username,$password,$prevent_rebind=false){
+    public function authenticate($username, $password, $prevent_rebind = false) {
         // Prevent null binding
-        if ($username===NULL || $password===NULL){ return (false); } 
-        if (empty($username) || empty($password)){ return (false); }
+        if ($username === NULL || $password === NULL) { return false; } 
+        if (empty($username) || empty($password)) { return false; }
         
         // Bind as the user        
-        $this->_bind = @ldap_bind($this->_conn,$username.$this->_account_suffix,$password);
-        if (!$this->_bind){ return (false); }
+        $ret = true;
+        $this->_bind = @ldap_bind($this->_conn, $username . $this->_account_suffix, $password);
+        if (!$this->_bind){ $ret = false; }
         
         // Cnce we've checked their details, kick back into admin mode if we have it
-        if ($this->_ad_username!=NULL && !$prevent_rebind){
-            $this->_bind = @ldap_bind($this->_conn,$this->_ad_username.$this->_account_suffix,$this->_ad_password);
+        if ($this->_ad_username !== NULL && !$prevent_rebind) {
+            $this->_bind = @ldap_bind($this->_conn, $this->_ad_username . $this->_account_suffix , $this->_ad_password);
             if (!$this->_bind){
                 // This should never happen in theory
                 throw new adLDAPException('Rebind to Active Directory failed. AD said: ' . $this->get_last_error());
             } 
         }
         
-        return (true);
+        return $ret;
     }
 
     //*****************************************************************************************************************
