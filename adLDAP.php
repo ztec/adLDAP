@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 3.3.1
+ * Version 3.3.2
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -30,7 +30,7 @@
  * @copyright (c) 2006-2010 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision$
- * @version 3.3.1
+ * @version 3.3.2
  * @link http://adldap.sourceforge.net/
  */
 
@@ -1597,6 +1597,32 @@ class adLDAP {
         }
 
         return ($groups);
+    }
+    
+    //************************************************************************************************************
+    //  ORGANIZATIONAL UNIT FUNCTIONS
+    
+     /**
+    * Create an organizational unit
+    * 
+    * @param array $attributes Default attributes of the ou
+    * @return bool
+    */
+    public function ou_create($attributes){
+        if (!is_array($attributes)){ return ("Attributes must be an array"); }
+        if (!array_key_exists("ou_name",$attributes)){ return ("Missing compulsory field [ou_name]"); }
+        if (!array_key_exists("container",$attributes)){ return ("Missing compulsory field [container]"); }
+        if (!is_array($attributes["container"])){ return ("Container attribute must be an array."); }
+        $attributes["container"]=array_reverse($attributes["container"]);
+
+        $add=array();
+        $add["objectClass"] = "organizationalUnit";
+
+        $container="OU=".implode(",OU=",$attributes["container"]);
+        $result=ldap_add($this->_conn,"CN=".$add["cn"].", ".$container.",".$this->_base_dn,$add);
+        if ($result!=true){ return (false); }
+        
+        return (true);
     }
     
     //************************************************************************************************************
