@@ -986,8 +986,9 @@ class adLDAP {
             }
             
             $entries[0]["memberof"]["count"]++;
+            return $entries;
         }
-        return ($entries);
+        return false;
     }
     
     /**
