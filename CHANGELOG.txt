@@ -8,6 +8,10 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
+Version 4.0.0
+-------------
+[+] New feature: Version 4 is a complete re-write of the class and is backwards incompatible with version 3 and below.  Groups, users, contacts, etc have been seperated into seperate classes and can be called like this $adldap->user()->modify(); or $adldap->group()->create();
+
 Version 3.3.2
 -------------
 [+] New feature: Move the user to a new OU using user_move() function
