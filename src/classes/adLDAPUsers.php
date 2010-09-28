@@ -35,6 +35,7 @@
  * @link http://adldap.sourceforge.net/
  */
 require_once(dirname(__FILE__) . '/../adLDAP.php');
+require_once(dirname(__FILE__) . '/../collections/adLDAPUserCollection.php');
 
 /**
 * USER FUNCTIONS
@@ -250,7 +251,30 @@ class adLDAPUsers {
                     $entries[0]["memberof"]["count"]++;
                 }
             }
+            
             return $entries;
+        }
+        return false;
+    }
+    
+    /**
+    * Find information about the users. Returned in a raw array format from AD
+    * 
+    * @param string $username The username to query
+    * @param array $fields Array of parameters to query
+    * @param bool $isGUID Is the username passed a GUID or a samAccountName
+    * @return mixed
+    */
+    public function infoCollection($username, $fields = NULL, $isGUID = false)
+    {
+        if ($username === NULL) { return false; }
+        if (!$this->adldap->getLdapBind()) { return false; }
+        
+        $info = $this->info($username, $fields, $isGUID);
+        
+        if ($info !== false) {
+            $collection = new adLDAPUserCollection($info);
+            return $collection;
         }
         return false;
     }

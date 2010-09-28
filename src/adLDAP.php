@@ -46,7 +46,7 @@
 * Before asking questions, please read the Documentation at
 * http://adldap.sourceforge.net/wiki/doku.php?id=api
 */
-
+require_once(dirname(__FILE__) . '/collections/adLDAPCollection.php');
 require_once(dirname(__FILE__) . '/classes/adLDAPGroups.php');
 require_once(dirname(__FILE__) . '/classes/adLDAPUsers.php');
 require_once(dirname(__FILE__) . '/classes/adLDAPFolders.php');

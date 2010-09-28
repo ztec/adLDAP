@@ -35,6 +35,7 @@
  * @link http://adldap.sourceforge.net/
  */
 require_once(dirname(__FILE__) . '/../adLDAP.php');
+require_once(dirname(__FILE__) . '/../collections/adLDAPGroupCollection.php');
 
 /**
 * GROUP FUNCTIONS
@@ -403,8 +404,29 @@ class adLDAPGroups {
         }
         $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
         $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
-        
+
         return $entries;
+    }
+    
+    /**
+    * Group Information.  Returns an collection
+    * The group name is case sensitive
+    * 
+    * @param string $groupName The group name to retrieve info about
+    * @param array $fields Fields to retrieve
+    * @return adLDAPGroupCollection
+    */
+    public function infoCollection($groupName, $fields = NULL)
+    {
+        if ($groupName === NULL) { return false; }
+        if (!$this->adldap->getLdapBind()) { return false; }
+        
+        $info = $this->info($groupName, $fields);
+        if ($info !== false) {
+            $collection = new adLDAPGroupCollection($info);
+            return $collection;
+        }
+        return false;
     }
     
     /**
