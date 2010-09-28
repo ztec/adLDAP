@@ -8,7 +8,7 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
-Trunk Commits
+Version 3.3.2
 -------------
 [+] New feature: Move the user to a new OU using user_move() function
 [-] Bug fix: Prevent an 'undefined index' error in recursive_groups() when full PHP E_ALL logging is enabled
