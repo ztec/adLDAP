@@ -16,7 +16,7 @@ to benefit the entire community :)
 REQUIREMENTS
 ============
 
-adLDAP requires PHP 4 and both the LDAP (http://php.net/ldap) and SSL (http://php.net/openssl) libraries
+adLDAP requires PHP 5 and both the LDAP (http://php.net/ldap) and SSL (http://php.net/openssl) libraries
 
 INSTALLATION
 ============
