@@ -67,9 +67,9 @@ abstract class adLDAPCollection
     /**
     * Set the raw info array from Active Directory
     * 
-    * @param mixed $info
+    * @param array $info
     */
-    public function setInfo($info) 
+    public function setInfo(array $info) 
     {
         if ($this->info && sizeof($info) >= 1) {
             unset($this->info);
