@@ -423,7 +423,7 @@ class adLDAPGroups {
         
         $info = $this->info($groupName, $fields);
         if ($info !== false) {
-            $collection = new adLDAPGroupCollection($info);
+            $collection = new adLDAPGroupCollection($info, $this);
             return $collection;
         }
         return false;

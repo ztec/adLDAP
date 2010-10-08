@@ -35,6 +35,12 @@
  * @link http://adldap.sourceforge.net/
 */
 
-class adLDAPGroupCollection extends adLDAPCollection {
+class adLDAPGroupCollection extends adLDAPCollection 
+{
+    
+    public function __set($attribute, $value)
+    {
+
+    }
 }
 ?>

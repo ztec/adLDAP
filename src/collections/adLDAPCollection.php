@@ -38,14 +38,30 @@
 abstract class adLDAPCollection
 {
     /**
+    * The current adLDAP connection via dependency injection
+    * 
+    * @var adLDAP
+    */
+    protected $adldap;
+    
+    /**
+    * The current object being modifed / called
+    * 
+    * @var mixed
+    */
+    protected $currentObject;
+    
+    /**
     * The raw info array from Active Directory
     * 
     * @var array
     */
     protected $info;
     
-    public function __construct($info) {
+    public function __construct($info, adLDAP $adldap) 
+    {
         $this->setInfo($info);   
+        $this->adldap = $adldap;
     }
     
     /**
@@ -53,7 +69,8 @@ abstract class adLDAPCollection
     * 
     * @param mixed $info
     */
-    public function setInfo($info) {
+    public function setInfo($info) 
+    {
         if ($this->info && sizeof($info) >= 1) {
             unset($this->info);
         }
@@ -66,7 +83,8 @@ abstract class adLDAPCollection
     * @param string $attribute
     * @return mixed
     */
-    public function __get($attribute){
+    public function __get($attribute)
+    {
         if (isset($this->info[0]) && is_array($this->info[0])) {
             foreach ($this->info[0] as $infoAttribute) {
                 if (strtolower($infoAttribute) == strtolower($attribute)) {
@@ -89,5 +107,14 @@ abstract class adLDAPCollection
             return NULL;   
         }
     }    
+    
+    /**
+    * Magic set method to update an attribute
+    * 
+    * @param string $attribute
+    * @param string $value
+    * @return bool
+    */
+    abstract public function __set($attribute, $value);
 }
 ?>
