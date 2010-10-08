@@ -501,7 +501,12 @@ class adLDAP {
         if (count($options)>0){
             if (array_key_exists("account_suffix",$options)){ $this->accountSuffix = $options["account_suffix"]; }
             if (array_key_exists("base_dn",$options)){ $this->baseDn = $options["base_dn"]; }
-            if (array_key_exists("domain_controllers",$options)){ $this->domainControllers = $options["domain_controllers"]; }
+            if (array_key_exists("domain_controllers",$options)){ 
+                if (!is_array($options["domain_controllers"])) { 
+                    throw new adLDAPException('[domain_controllers] option must be an array');
+                }
+                $this->domainControllers = $options["domain_controllers"]; 
+            }
             if (array_key_exists("admin_username",$options)){ $this->adminUsername = $options["admin_username"]; }
             if (array_key_exists("admin_password",$options)){ $this->adminPassword = $options["admin_password"]; }
             if (array_key_exists("real_primarygroup",$options)){ $this->realPrimaryGroup = $options["real_primarygroup"]; }
