@@ -273,7 +273,7 @@ class adLDAPUsers {
         $info = $this->info($username, $fields, $isGUID);
         
         if ($info !== false) {
-            $collection = new adLDAPUserCollection($info, $this);
+            $collection = new adLDAPUserCollection($info, $this->adldap);
             return $collection;
         }
         return false;
