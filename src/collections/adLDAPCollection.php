@@ -86,8 +86,8 @@ abstract class adLDAPCollection
     public function __get($attribute)
     {
         if (isset($this->info[0]) && is_array($this->info[0])) {
-            foreach ($this->info[0] as $infoAttribute) {
-                if (strtolower($infoAttribute) == strtolower($attribute)) {
+            foreach ($this->info[0] as $keyAttr => $valueAttr) {
+                if (strtolower($keyArry) == strtolower($attribute)) {
                     if ($this->info[0][strtolower($attribute)]['count'] == 1) {
                         return $this->info[0][strtolower($attribute)][0];   
                     }
