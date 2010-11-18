@@ -759,6 +759,7 @@ class adLDAP {
         mt_srand(doubleval(microtime()) * 100000000); // For older PHP versions
         return $this->domainControllers[array_rand($this->domainControllers)];
     }  
+
 }
 
 /**

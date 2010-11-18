@@ -49,7 +49,7 @@ class adLDAPContacts {
         $container= "OU=" . implode(",OU=", $attributes["container"]);
 
         // Add the entry
-        $result = @ldap_add($this->adldap->getLdapConnection(), "CN=" . $add["cn"][0] . ", " . $container . "," . $this->adldap->getBaseDn(), $add);
+        $result = @ldap_add($this->adldap->getLdapConnection(), "CN=" . $this->adldap->utilities()->escapeCharacters($add["cn"][0]) . ", " . $container . "," . $this->adldap->getBaseDn(), $add);
         if ($result != true) { 
             return false; 
         }

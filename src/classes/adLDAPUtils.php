@@ -79,6 +79,17 @@ class adLDAPUtils {
     }
     
     /**
+    * Escape characters for use in an ldap_create function
+    * 
+    * @param string $str
+    * @return string
+    */
+    public function escapeCharacters($str) {
+        $str = str_replace(",", "\,", $str);
+        return $str;
+    }
+    
+    /**
     * Escape strings for the use in LDAP filters
     * 
     * DEVELOPERS SHOULD BE DOING PROPER FILTERING IF THEY'RE ACCEPTING USER INPUT
