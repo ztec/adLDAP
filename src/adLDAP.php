@@ -71,6 +71,15 @@ class adLDAP {
     const ADLDAP_CONTAINER = 'CN';
     
     /**
+    * The default port for LDAP non-SSL connections
+    */
+    const ADLDAP_LDAP_PORT = '389';
+    /**
+    * The default port for LDAPS SSL connections
+    */
+    const ADLDAP_LDAPS_PORT = '636';
+    
+    /**
     * The account suffix for your domain, can be set when the class is invoked
     * 
     * @var string
@@ -85,6 +94,13 @@ class adLDAP {
     * @var string
     */
 	protected $baseDn = "DC=mydomain,DC=local"; 
+    
+    /** 
+    * Port used to talk to the domain controllers. 
+    *  
+    * @var int 
+    */ 
+    protected $adPort = self::ADLDAP_LDAP_PORT; 
 	
     /**
     * Array of domain controllers. Specifiy multiple controllers if you
@@ -361,6 +377,26 @@ class adLDAP {
     }
     
     /**
+    * Sets the port number your domain controller communicates over
+    * 
+    * @param int $adPort
+    */
+    public function setPort($adPort) 
+    { 
+        $this->adPort = $adPort; 
+    } 
+    
+    /**
+    * Gets the port number your domain controller communicates over
+    * 
+    * @return int
+    */
+    public function getPort() 
+    { 
+        return $this->adPort; 
+    } 
+    
+    /**
     * Set the username of an account with higher priviledges
     * 
     * @param string $adminUsername
@@ -432,6 +468,13 @@ class adLDAP {
     public function setUseSSL($useSSL)
     {
           $this->useSSL = $useSSL;
+          // Set the default port correctly 
+          if($this->useSSL) { 
+            $this->setPort(self::ADLDAP_LDAPS_PORT); 
+          }
+          else { 
+            $this->setPort(self::ADLDAP_LDAP_PORT); 
+          } 
     }
 
     /**
@@ -510,9 +553,10 @@ class adLDAP {
             if (array_key_exists("admin_username",$options)){ $this->adminUsername = $options["admin_username"]; }
             if (array_key_exists("admin_password",$options)){ $this->adminPassword = $options["admin_password"]; }
             if (array_key_exists("real_primarygroup",$options)){ $this->realPrimaryGroup = $options["real_primarygroup"]; }
-            if (array_key_exists("use_ssl",$options)){ $this->useSSL = $options["use_ssl"]; }
+            if (array_key_exists("use_ssl",$options)){ $this->setUseSSL($options["use_ssl"]); }
             if (array_key_exists("use_tls",$options)){ $this->useTLS = $options["use_tls"]; }
             if (array_key_exists("recursive_groups",$options)){ $this->recursiveGroups = $options["recursive_groups"]; }
+            if (array_key_exists("ad_port",$options)){ $this->setPort($options["ad_port"]); } 
         }
         
         if ($this->ldapSupported() === false) {
@@ -543,9 +587,9 @@ class adLDAP {
         // Connect to the AD/LDAP server as the username/password
         $domainController = $this->randomController();
         if ($this->useSSL) {
-            $this->ldapConnection = ldap_connect("ldaps://" . $domainController, 636);
+            $this->ldapConnection = ldap_connect("ldaps://" . $domainController, $this->adPort);
         } else {
-            $this->ldapConnection = ldap_connect($domainController);
+            $this->ldapConnection = ldap_connect($domainController, $this->adPort);
         }
                
         // Set some ldap options for talking to AD
