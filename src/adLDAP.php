@@ -144,7 +144,7 @@ class adLDAP {
     * 
     * @var bool
     */
-    protected $userTLS = false;
+    protected $useTLS = false;
     
     /**
     * When querying group memberships, do it recursively 
