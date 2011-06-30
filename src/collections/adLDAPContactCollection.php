@@ -26,7 +26,7 @@
  * 
  * @category ToolsAndUtilities
  * @package adLDAP
- * @subpackage UserCollection
+ * @subpackage ContactCollection
  * @author Scott Barnett, Richard Hyland
  * @copyright (c) 2006-2010 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
