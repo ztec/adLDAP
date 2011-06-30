@@ -35,6 +35,7 @@
  * @link http://adldap.sourceforge.net/
  */
 require_once(dirname(__FILE__) . '/../adLDAP.php');
+require_once(dirname(__FILE__) . '/../collections/adLDAPComputerCollection.php');  
 
 /**
 * COMPUTER MANAGEMENT FUNCTIONS
@@ -72,6 +73,27 @@ class adLDAPComputers {
         $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
         
         return $entries;
+    }
+    
+    /**
+    * Find information about the computers. Returned in a raw array format from AD
+    * 
+    * @param string $computerName The name of the computer
+    * @param array $fields Array of parameters to query
+    * @return mixed
+    */
+    public function infoCollection($computerName, $fields = NULL)
+    {
+        if ($computerName === NULL) { return false; }
+        if (!$this->adldap->getLdapBind()) { return false; }
+        
+        $info = $this->info($computerName, $fields);
+        
+        if ($info !== false) {
+            $collection = new adLDAPComputerCollection($info, $this->adldap);
+            return $collection;
+        }
+        return false;
     }
     
     /**
