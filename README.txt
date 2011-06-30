@@ -58,7 +58,7 @@ DOCUMENTATION
 
 You can find our website at http://adldap.sourceforce.net or the class documentation at
 
-http://adldap.sourceforge.net/wiki/doku.php?id=api
+http://adldap.sourceforge.net/wiki/doku.php?id=documentation
 
 LICENSE
 =======
