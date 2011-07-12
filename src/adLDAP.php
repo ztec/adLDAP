@@ -147,6 +147,14 @@ class adLDAP {
     protected $useTLS = false;
     
     /**
+    * Use SSO  
+    * To indicate to adLDAP to reuse password set by the brower through NTLM or Kerberos 
+    * 
+    * @var bool
+    */
+    protected $useSSO = false;
+    
+    /**
     * When querying group memberships, do it recursively 
     * eg. User Fred is a member of Group A, which is a member of Group B, which is a member of Group C
     * user_ingroup("Fred","C") will returns true with this option turned on, false if turned off     
@@ -462,7 +470,7 @@ class adLDAP {
     /**
     * Set whether to use SSL
     * 
-    * @param bool $userSSL
+    * @param bool $useSSL
     * @return void
     */
     public function setUseSSL($useSSL)
@@ -506,6 +514,31 @@ class adLDAP {
     public function getUseTLS()
     {
           return $this->useTLS;
+    }
+    
+    /**
+    * Set whether to use SSO
+    * Requires ldap_sasl_bind support. Be sure --with-ldap-sasl is used when configuring PHP otherwise this function will be undefined. 
+    * 
+    * @param bool $useSSO
+    * @return void
+    */
+    public function setUseSSO($useSSO)
+    {
+          if ($useSSO === true && !$this->ldapSaslSupported()) {
+              throw new adLDAPException('No LDAP SASL support for PHP.  See: http://www.php.net/ldap_sasl_bind');
+          }
+          $this->useSSO = $useSSO;
+    }
+
+    /**
+    * Get the SSO setting
+    * 
+    * @return bool
+    */
+    public function getUseSSO()
+    {
+          return $this->useSSO;
     }
     
     /**
@@ -557,6 +590,12 @@ class adLDAP {
             if (array_key_exists("use_tls",$options)){ $this->useTLS = $options["use_tls"]; }
             if (array_key_exists("recursive_groups",$options)){ $this->recursiveGroups = $options["recursive_groups"]; }
             if (array_key_exists("ad_port",$options)){ $this->setPort($options["ad_port"]); } 
+            if (array_key_exists("sso",$options)){ 
+                $this->setUseSSO($options["sso"]);
+                if (!$this->ldapSaslSupported()) {
+                    $this->setUseSSO(false);
+                }
+            } 
         }
         
         if ($this->ldapSupported() === false) {
@@ -607,11 +646,23 @@ class adLDAP {
                 if ($this->useSSL && !$this->useTLS) {
                     // If you have problems troubleshooting, remove the @ character from the ldapldapBind command above to get the actual error message
                     throw new adLDAPException('Bind to Active Directory failed. Either the LDAPs connection failed or the login credentials are incorrect. AD said: ' . $this->getLastError());
-                } else {
+                }
+                else {
                     throw new adLDAPException('Bind to Active Directory failed. Check the login credentials and/or server details. AD said: ' . $this->getLastError());
                 }
             }
         }
+        if ($this->useSSO && $_SERVER['REMOTE_USER'] && $this->adminUsername === null && $_SERVER['KRB5CCNAME']) {
+            putenv("KRB5CCNAME=" . $_SERVER['KRB5CCNAME']);  
+            $this->ldapBind = @ldap_sasl_bind($this->ldapConnection, NULL, NULL, "GSSAPI"); 
+            if (!$this->ldapBind){ 
+                throw new adLDAPException('Rebind to Active Directory failed. AD said: ' . $this->getLastError()); 
+            }
+            else {
+                return true;
+            }
+        }
+                
         
         if ($this->baseDn == NULL) {
             $this->baseDn = $this->findBaseDn();   
@@ -641,6 +692,18 @@ class adLDAP {
         // Prevent null binding
         if ($username === NULL || $password === NULL) { return false; } 
         if (empty($username) || empty($password)) { return false; }
+        
+        // Allow binding over SSO for Kerberos
+        if ($this->useSSO && $_SERVER['REMOTE_USER'] && $_SERVER['REMOTE_USER'] == $username && $this->adminUsername === NULL && $_SERVER['KRB5CCNAME']) { 
+            putenv("KRB5CCNAME=" . $_SERVER['KRB5CCNAME']);
+            $this->ldapBind = @ldap_sasl_bind($this->ldapConnection, NULL, NULL, "GSSAPI");
+            if (!$this->ldapBind) {
+                throw new adLDAPException('Rebind to Active Directory failed. AD said: ' . $this->getLastError());
+            }
+            else {
+                return true;
+            }
+        }
         
         // Bind as the user        
         $ret = true;
@@ -708,6 +771,19 @@ class adLDAP {
     {
         if (!function_exists('ldap_connect')) {
             return false;   
+        }
+        return true;
+    }
+    
+    /**
+    * Detect ldap_sasl_bind support in PHP
+    * 
+    * @return bool
+    */
+    protected function ldapSaslSupported()
+    {
+        if (!function_exists('ldap_sasl_bind')) {
+            return false;
         }
         return true;
     }
