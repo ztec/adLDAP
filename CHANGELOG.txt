@@ -14,6 +14,7 @@ TRUNK
 [+] New feature: #12 new $adldap->user()->find() function to find users by searching specific fields
 [-] Bug fix: $adldap->user()->usernameToGuid() function had invalid parameter in ldap_search function
 [-] Bug fix: #9 When a password change is attempted but fails due to the configured Active Directory Password Policy. Instead of the error an Exception is thrown.
+[-] Bug fix: #10 PHP Warning issued for missing array element. Assumes that element ["count"] exists which does not when the login only has one AD group.
 
 Version 4.0.0
 -------------
