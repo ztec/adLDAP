@@ -248,6 +248,9 @@ class adLDAPUsers {
                     } else {
                         $entries[0]["memberof"][] = "CN=Domain Users,CN=Users," . $this->adldap->getBaseDn();
                     }
+                    if (!isset($entries[0]["memberof"]["count"])) {
+                        $entries[0]["memberof"]["count"] = 0;
+                    }
                     $entries[0]["memberof"]["count"]++;
                 }
             }
