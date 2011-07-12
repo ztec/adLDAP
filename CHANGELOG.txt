@@ -8,9 +8,8 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
-TRUNK
------
-
+Version 4.0.1
+-------------
 [+] New feature: #13 allow binding over SASL where supported
 [+] New feature: #12 new $adldap->user()->find() function to find users by searching specific fields
 [+] New feature: exchange_altrecipient and exchange_deliverandredirect added to adldap_schema
