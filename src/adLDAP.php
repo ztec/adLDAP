@@ -825,7 +825,7 @@ class adLDAP {
         if ($attributes["logon_name"]){ $mod["userPrincipalName"][0]=$attributes["logon_name"]; }
         if ($attributes["manager"]){ $mod["manager"][0]=$attributes["manager"]; }  //UNTESTED ***Use DistinguishedName***
         if ($attributes["office"]){ $mod["physicalDeliveryOfficeName"][0]=$attributes["office"]; }
-        if ($attributes["password"]){ $mod["unicodePwd"][0]=$this->encode_password($attributes["password"]); }
+        if ($attributes["password"]){ $mod["unicodePwd"][0]=$this->user()->encodePassword($attributes["password"]); }
         if ($attributes["profile_path"]){ $mod["profilepath"][0]=$attributes["profile_path"]; }
         if ($attributes["script_path"]){ $mod["scriptPath"][0]=$attributes["script_path"]; }
         if ($attributes["surname"]){ $mod["sn"][0]=$attributes["surname"]; }

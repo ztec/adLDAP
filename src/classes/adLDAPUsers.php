@@ -513,7 +513,7 @@ class adLDAPUsers {
     * @param string $password The password to encode
     * @return string
     */
-    protected function encodePassword($password)
+    public function encodePassword($password)
     {
         $password="\"".$password."\"";
         $encoded="";
