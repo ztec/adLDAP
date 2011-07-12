@@ -13,10 +13,12 @@ TRUNK
 
 [+] New feature: #13 allow binding over SASL where supported
 [+] New feature: #12 new $adldap->user()->find() function to find users by searching specific fields
+[+] New feature: exchange_altrecipient and exchange_deliverandredirect added to adldap_schema
 [-] Bug fix: $adldap->user()->usernameToGuid() function had invalid parameter in ldap_search function
 [-] Bug fix: #9 When a password change is attempted but fails due to the configured Active Directory Password Policy. Instead of the error an Exception is thrown.
 [-] Bug fix: #10 PHP Warning issued for missing array element. Assumes that element ["count"] exists which does not when the login only has one AD group.
 [-] Bug fix: #8 The ou_create function was giving naming violation errors
+[-] Bug fix: adldap_schema errors from the version 4.0 changes
 
 Version 4.0.0
 -------------
