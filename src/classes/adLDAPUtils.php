@@ -226,7 +226,7 @@ class adLDAPUtils {
     /**
     * Convert 8bit characters e.g. accented characters to UTF8 encoded characters
     */
-    protected function encode8Bit(&$item, $key) {
+    public function encode8Bit(&$item, $key) {
         $encode = false;
         if (is_string($item)) {
             for ($i=0; $i<strlen($item); $i++) {
