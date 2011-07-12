@@ -159,9 +159,10 @@ class adLDAPFolders {
 
         $add=array();
         $add["objectClass"] = "organizationalUnit";
+        $add["OU"] = $attributes['ou_name'];
 
         $container = "OU=" . implode(",OU=", $attributes["container"]);
-        $result = ldap_add($this->adldap->getLdapConnection(), "CN=" . $add["cn"] . ", " . $container . "," . $this->adldap->getBaseDn(), $add);
+        $result = ldap_add($this->adldap->getLdapConnection(), "OU=" . $add["ou"] . ", " . $container . "," . $this->adldap->getBaseDn(), $add);
         if ($result != true) { 
             return false; 
         }
