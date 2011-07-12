@@ -160,9 +160,13 @@ class adLDAPFolders {
         $add=array();
         $add["objectClass"] = "organizationalUnit";
         $add["OU"] = $attributes['ou_name'];
+        $containers = "";
+        if (count($attributes['container']) > 0) {
+            $containers = "OU=" . implode(",OU=", $attributes["container"]) . ",";
+        }
 
         $container = "OU=" . implode(",OU=", $attributes["container"]);
-        $result = ldap_add($this->adldap->getLdapConnection(), "OU=" . $add["ou"] . ", " . $container . "," . $this->adldap->getBaseDn(), $add);
+        $result = ldap_add($this->adldap->getLdapConnection(), "OU=" . $add["ou"] . ", " . $containers . $this->adldap->getBaseDn(), $add);
         if ($result != true) { 
             return false; 
         }
