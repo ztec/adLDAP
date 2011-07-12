@@ -8,6 +8,11 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
+TRUNK
+-----
+
+[-] Bug fix: #9 When a password change is attempted but fails due to the configured Active Directory Password Policy. Instead of the error an Exception is thrown.
+
 Version 4.0.0
 -------------
 [+] New feature: Version 4 is a complete re-write of the class and is backwards incompatible with version 3 and below.  Groups, users, contacts, etc have been seperated into seperate classes and can be called like this $adldap->user()->modify(); or $adldap->group()->create();
