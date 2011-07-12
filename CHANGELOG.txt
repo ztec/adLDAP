@@ -11,6 +11,7 @@ CHANGELOG
 TRUNK
 -----
 
+[+] New feature: #13 allow binding over SASL where supported
 [+] New feature: #12 new $adldap->user()->find() function to find users by searching specific fields
 [-] Bug fix: $adldap->user()->usernameToGuid() function had invalid parameter in ldap_search function
 [-] Bug fix: #9 When a password change is attempted but fails due to the configured Active Directory Password Policy. Instead of the error an Exception is thrown.
