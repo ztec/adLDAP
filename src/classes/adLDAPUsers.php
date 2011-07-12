@@ -583,7 +583,7 @@ class adLDAPUsers {
         
         $filter = "samaccountname=" . $username; 
         $fields = array("objectGUID"); 
-        $sr = @ldap_search($this->adldap->getLdapConnection(), $this->adldap->getLdapBind(), $filter, $fields); 
+        $sr = @ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields); 
         if (ldap_count_entries($this->adldap->getLdapConnection(), $sr) > 0) { 
             $entry = @ldap_first_entry($this->adldap->getLdapConnection(), $sr); 
             $guid = @ldap_get_values_len($this->adldap->getLdapConnection(), $entry, 'objectGUID'); 
@@ -591,6 +591,46 @@ class adLDAPUsers {
             return $strGUID; 
         }
         return false; 
+    }
+    
+    /**
+    * Return a list of all users in AD that have a specific value in a field
+    *
+    * @param bool $includeDescription Return a description of the user
+    * @param string $searchField Field to search search for
+    * @param string $searchFilter Value to search for in the specified field
+    * @param bool $sorted Sort the user accounts
+    * @return array
+    */
+    public function find($includeDescription = false, $searchField = false, $searchFilter = false, $sorted = true){
+        if (!$this->adldap->getLdapBind()){ return false; }
+          
+        // Perform the search and grab all their details
+        $searchParams = "";
+        if ($searchField) {
+            $searchParams = "(" . $searchField . "=" . $searchFilter . ")";
+        }                           
+        $filter = "(&(objectClass=user)(samaccounttype=" . adLDAP::ADLDAP_NORMAL_ACCOUNT .")(objectCategory=person)" . $searchParams . ")";
+        $fields=array("samaccountname","displayname");
+        $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
+        $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
+
+        $users_array = array();
+        for ($i=0; $i < $entries["count"]; $i++) {
+            if ($includeDescription && strlen($entries[$i]["displayname"][0]) > 0) {
+                $usersArray[$entries[$i]["samaccountname"][0]] = $entries[$i]["displayname"][0];
+            }
+            else if ($includeDescription) {
+                $usersArray[$entries[$i]["samaccountname"][0]] = $entries[$i]["samaccountname"][0];
+            }
+            else {
+                array_push($usersArray, $entries[$i]["samaccountname"][0]);
+            }
+        }
+        if ($sorted){ 
+          asort($usersArray); 
+        }
+        return ($usersArray);
     }
     
     /**
