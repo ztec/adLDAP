@@ -536,7 +536,7 @@ class adLDAPUsers {
             return false; 
         }
         $userDn = $user[0]["dn"];
-        return $user_dn;
+        return $userDn;
     }
     
     /**
