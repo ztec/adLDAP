@@ -10,6 +10,11 @@ CHANGELOG
 
 Version 4.0.2
 -------------
+[-] Bug fix: #16 Typo Error in adLDAPGroups.php could cause an error when PHP strict mode error reporting enabled
+[-] Bug fix: #18 Typo in adLDAPContacts.php affecting info and infoCollection functions failing
+
+Version 4.0.1
+-------------
 [+] New feature: #13 allow binding over SASL where supported
 [+] New feature: #12 new $adldap->user()->find() function to find users by searching specific fields
 [+] New feature: exchange_altrecipient and exchange_deliverandredirect added to adldap_schema
