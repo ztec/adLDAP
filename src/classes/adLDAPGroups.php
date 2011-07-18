@@ -481,7 +481,7 @@ class adLDAPGroups {
         $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
         $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
 
-        $groupsGrray = array();        
+        $groupsArray = array();        
         for ($i=0; $i<$entries["count"]; $i++){
             if ($includeDescription && strlen($entries[$i]["description"][0]) > 0 ) {
                 $groupsArray[$entries[$i]["samaccountname"][0]] = $entries[$i]["description"][0];
