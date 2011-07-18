@@ -130,7 +130,7 @@ class adLDAPContacts {
     */
     public function info($distinguishedName, $fields = NULL)
     {
-        if ($distinguishedname === NULL) { return false; }
+        if ($distinguishedName === NULL) { return false; }
         if (!$this->adldap->getLdapBind()) { return false; }
 
         $filter = "distinguishedName=" . $distinguishedName;
@@ -163,7 +163,7 @@ class adLDAPContacts {
     */
     public function infoCollection($distinguishedName, $fields = NULL)
     {
-        if ($distinguishedname === NULL) { return false; }
+        if ($distinguishedName === NULL) { return false; }
         if (!$this->adldap->getLdapBind()) { return false; }
         
         $info = $this->info($distinguishedName, $fields);
