@@ -8,7 +8,7 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
-Version 4.0.1
+Version 4.0.2
 -------------
 [+] New feature: #13 allow binding over SASL where supported
 [+] New feature: #12 new $adldap->user()->find() function to find users by searching specific fields
