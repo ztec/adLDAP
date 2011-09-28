@@ -10,6 +10,7 @@ CHANGELOG
 
 Version 4.0.3
 -------------
+[+] New feature: Added support for homephone attribute to the adLDAP schema
 [-] Bug fix: Change strGuidToHex to public function to prevent errors when used with $isGUID = true
 
 Version 4.0.2
