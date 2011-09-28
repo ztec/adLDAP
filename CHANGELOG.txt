@@ -14,6 +14,8 @@ Version 4.0.3
 [+] New feature: Added getLastLogon($username) to the user model to return a Unix timestamp for the last logon of a user
 [-] Bug fix: Change strGuidToHex to public function to prevent errors when used with $isGUID = true
 [-] Bug fix: user()->find() function would cause an undefined array error if full error reporting was enabled
+[-] Bug fix: #11 If the array "$this->info[0][strtolower($attribute)]" contains a key with 0 (zero), it does not add to the array
+[-] Bug fix: #22 Typo in adLDAPFolders for listings
 
 Version 4.0.2
 -------------
