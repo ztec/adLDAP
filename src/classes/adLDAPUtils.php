@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 4.0.2
+ * Version 4.0.3
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -111,7 +111,7 @@ class adLDAPUtils {
     * @param string $strGUID A string representation of a GUID
     * @return string
     */
-    protected function strGuidToHex($strGUID) 
+    public function strGuidToHex($strGUID) 
     {
         $strGUID = str_replace('-', '', $strGUID);
 
