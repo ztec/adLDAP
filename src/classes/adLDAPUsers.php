@@ -618,7 +618,7 @@ class adLDAPUsers {
         $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
         $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
 
-        $users_array = array();
+        $usersArray = array();
         for ($i=0; $i < $entries["count"]; $i++) {
             if ($includeDescription && strlen($entries[$i]["displayname"][0]) > 0) {
                 $usersArray[$entries[$i]["samaccountname"][0]] = $entries[$i]["displayname"][0];
