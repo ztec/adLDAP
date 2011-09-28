@@ -31,7 +31,7 @@
  * @copyright (c) 2006-2011 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision: 97 $
- * @version 4.0.2
+ * @version 4.0.3
  * @link http://adldap.sourceforge.net/
  */
 require_once(dirname(__FILE__) . '/../adLDAP.php');
