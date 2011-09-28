@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 4.0.2
+ * Version 4.0.3
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -30,7 +30,7 @@
  * @copyright (c) 2006-2011 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision$
- * @version 4.0.2
+ * @version 4.0.3
  * @link http://adldap.sourceforge.net/
  */
 
@@ -837,6 +837,7 @@ class adLDAP {
         if ($attributes["web_page"]){ $mod["wWWHomePage"][0]=$attributes["web_page"]; }
         if ($attributes["fax"]){ $mod["facsimileTelephoneNumber"][0]=$attributes["fax"]; }
         if ($attributes["enabled"]){ $mod["userAccountControl"][0]=$attributes["enabled"]; }
+        if ($attributes["homephone"]){ $mod["homephone"][0]=$attributes["homephone"]; }
         
         // Distribution List specific schema
         if ($attributes["group_sendpermission"]){ $mod["dlMemSubmitPerms"][0]=$attributes["group_sendpermission"]; }
