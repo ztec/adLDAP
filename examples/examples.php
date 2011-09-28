@@ -120,6 +120,18 @@ if (0) {
     }
 }
 
+// see a user's last logon time
+if (0) {
+    try {
+        $result = $adldap->user()->getLastLogon("username");
+        var_dump(date('Y-m-d H:i:s', $result));
+    }
+    catch (adLDAPException $e) {
+        echo $e; 
+        exit();   
+    }
+}
+
 // list the contents of the Users OU
 if (0) {
     $result=$adldap->folder()->listing(array('Users'), adLDAP::ADLDAP_FOLDER, false);

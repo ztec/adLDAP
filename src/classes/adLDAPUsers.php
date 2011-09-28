@@ -1,7 +1,7 @@
 <?php
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
- * Version 4.0.2
+ * Version 4.0.3
  * 
  * PHP Version 5 with SSL and LDAP support
  * 
@@ -31,7 +31,7 @@
  * @copyright (c) 2006-2011 Scott Barnett, Richard Hyland
  * @license http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html LGPLv2.1
  * @revision $Revision: 97 $
- * @version 4.0.2
+ * @version 4.0.3
  * @link http://adldap.sourceforge.net/
  */
 require_once(dirname(__FILE__) . '/../adLDAP.php');
@@ -662,6 +662,20 @@ class adLDAPUsers {
             return false;
         }
         return true;
+    }
+    
+    /**
+    * Get the last logon time of any user as a Unix timestamp
+    * 
+    * @param string $username
+    * @return long $unixTimestamp
+    */
+    public function getLastLogon($username) {
+        if (!$this->adldap->getLdapBind()) { return false; }
+        if ($username === null) { return "Missing compulsory field [username]"; }
+        $userInfo = $this->info($username, array("lastLogon"));
+        $lastLogon = adLDAPUtils::convertWindowsTimeToUnixTime($userInfo[0]['lastlogon'][0]);
+        return $lastLogon;
     }
     
     

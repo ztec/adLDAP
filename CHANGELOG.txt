@@ -11,6 +11,7 @@ CHANGELOG
 Version 4.0.3
 -------------
 [+] New feature: Added support for homephone attribute to the adLDAP schema
+[+] New feature: Added getLastLogon($username) to the user model to return a Unix timestamp for the last logon of a user
 [-] Bug fix: Change strGuidToHex to public function to prevent errors when used with $isGUID = true
 
 Version 4.0.2

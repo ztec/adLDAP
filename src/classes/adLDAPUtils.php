@@ -40,7 +40,7 @@ require_once(dirname(__FILE__) . '/../adLDAP.php');
 * UTILITY FUNCTIONS
 */
 class adLDAPUtils {
-    const ADLDAP_VERSION = '4.0.0';
+    const ADLDAP_VERSION = '4.0.3';
     
     /**
     * The current adLDAP connection via dependency injection
@@ -247,6 +247,17 @@ class adLDAPUtils {
     */
     public function getVersion() {
         return self::ADLDAP_VERSION;
+    }
+    
+    /**
+    * Round a Windows timestamp down to seconds and remove the seconds between 1601-01-01 and 1970-01-01
+    * 
+    * @param long $windowsTime
+    * @return long $unixTime
+    */
+    public function convertWindowsTimeToUnixTime($windowsTime) {
+      $unixTime = round($windowsTime / 10000000) - 11644477200; 
+      return $unixTime; 
     }
 }
 
