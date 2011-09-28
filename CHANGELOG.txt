@@ -8,6 +8,10 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
+Version 4.0.3
+-------------
+[-] Bug fix: Change strGuidToHex to public function to prevent errors when used with $isGUID = true
+
 Version 4.0.2
 -------------
 [-] Bug fix: #16 Typo Error in adLDAPGroups.php could cause an error when PHP strict mode error reporting enabled
