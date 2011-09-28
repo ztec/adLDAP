@@ -679,7 +679,7 @@ class adLDAP {
     public function close() {
         ldap_close($this->ldapConnection);
     }
-
+    
     /**
     * Validate a user's login credentials
     * 
@@ -897,8 +897,38 @@ class adLDAP {
     protected function randomController() 
     {
         mt_srand(doubleval(microtime()) * 100000000); // For older PHP versions
+        /*if (sizeof($this->domainControllers) > 1) {
+            $adController = $this->domainControllers[array_rand($this->domainControllers)]; 
+            // Test if the controller is responding to pings
+            $ping = $this->pingController($adController); 
+            if ($ping === false) { 
+                // Find the current key in the domain controllers array
+                $key = array_search($adController, $this->domainControllers);
+                // Remove it so that we don't end up in a recursive loop
+                unset($this->domainControllers[$key]);
+                // Select a new controller
+                return $this->randomController(); 
+            }
+            else { 
+                return ($adController); 
+            }
+        } */
         return $this->domainControllers[array_rand($this->domainControllers)];
     }  
+    
+    /** 
+    * Test basic connectivity to controller 
+    * 
+    * @return bool
+    */ 
+    protected function pingController($host) {
+        $port = $this->adPort; 
+        fsockopen($host, $port, $errno, $errstr, 10); 
+        if ($errno > 0) {
+            return false;
+        }
+        return true;
+    }
 
 }
 
