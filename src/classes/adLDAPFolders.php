@@ -166,7 +166,7 @@ class adLDAPFolders {
         }
 
         $container = "OU=" . implode(",OU=", $attributes["container"]);
-        $result = ldap_add($this->adldap->getLdapConnection(), "OU=" . $add["ou"] . ", " . $containers . $this->adldap->getBaseDn(), $add);
+        $result = ldap_add($this->adldap->getLdapConnection(), "OU=" . $add["OU"] . ", " . $containers . $this->adldap->getBaseDn(), $add);
         if ($result != true) { 
             return false; 
         }

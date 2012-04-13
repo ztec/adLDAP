@@ -14,6 +14,7 @@ Version 4.0.4
 [-] Bug Fix: #29 $includeDescription broken in adLDAPContacts->all()
 [-] Bug Fix: #25 exchange->createMailbox typo in $storageGroup variable null checking
 [-] Bug Fix: #25 exchange->createMailbox Call to undefined method adLDAPExchange::utilities()
+[-] Bug Fix: #27 Case mismatch on an array key in the folder()->create()
 
 Version 4.0.3
 -------------
