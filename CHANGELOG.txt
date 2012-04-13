@@ -8,6 +8,10 @@ http://adldap.sourceforge.net/
 CHANGELOG
 -------------------------------------------------------------------------------------------
 
+Version 4.0.4
+-------------
+[-] Bug Fix: $adldap->user()->getLastLogon('mySAMAccountName') produced a PHP error 'Non-static method adLDAPUtils::convertWindowsTimeToUnixTime() should not be called statically'
+
 Version 4.0.3
 -------------
 [+] New feature: Added support for homephone attribute to the adLDAP schema
