@@ -11,6 +11,7 @@ CHANGELOG
 Version 4.0.4
 -------------
 [-] Bug Fix: $adldap->user()->getLastLogon('mySAMAccountName') produced a PHP error 'Non-static method adLDAPUtils::convertWindowsTimeToUnixTime() should not be called statically'
+[-] Bug Fix: #29 $includeDescription broken in adLDAPContacts->all()
 
 Version 4.0.3
 -------------

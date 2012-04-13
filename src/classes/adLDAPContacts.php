@@ -264,7 +264,7 @@ class adLDAPContacts {
         for ($i=0; $i<$entries["count"]; $i++){
             if ($includeDescription && strlen($entries[$i]["displayname"][0])>0){
                 $usersArray[$entries[$i]["distinguishedname"][0]] = $entries[$i]["displayname"][0];
-            } elseif ($include_desc){
+            } elseif ($includeDescription){
                 $usersArray[$entries[$i]["distinguishedname"][0]] = $entries[$i]["distinguishedname"][0];
             } else {
                 array_push($usersArray, $entries[$i]["distinguishedname"][0]);
