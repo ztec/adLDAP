@@ -12,6 +12,8 @@ Version 4.0.4
 -------------
 [-] Bug Fix: $adldap->user()->getLastLogon('mySAMAccountName') produced a PHP error 'Non-static method adLDAPUtils::convertWindowsTimeToUnixTime() should not be called statically'
 [-] Bug Fix: #29 $includeDescription broken in adLDAPContacts->all()
+[-] Bug Fix: #25 exchange->createMailbox typo in $storageGroup variable null checking
+[-] Bug Fix: #25 exchange->createMailbox Call to undefined method adLDAPExchange::utilities()
 
 Version 4.0.3
 -------------

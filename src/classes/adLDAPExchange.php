@@ -67,8 +67,8 @@ class adLDAPExchange {
     public function createMailbox($username, $storageGroup, $emailAddress, $mailNickname=NULL, $useDefaults=TRUE, $baseDn=NULL, $isGUID=false)
     {
         if ($username === NULL){ return "Missing compulsory field [username]"; }     
-        if ($storagegroup === NULL) { return "Missing compulsory array [storagegroup]"; }
-        if (!is_array($storagegroup)) { return "[storagegroup] must be an array"; }
+        if ($storageGroup === NULL) { return "Missing compulsory array [storagegroup]"; }
+        if (!is_array($storageGroup)) { return "[storagegroup] must be an array"; }
         if ($emailaddress === NULL) { return "Missing compulsory field [emailaddress]"; }
         
         if ($baseDn === NULL) {
@@ -80,7 +80,7 @@ class adLDAPExchange {
         if ($mailNickname === NULL) { 
             $mailNickname = $username; 
         }
-        $mdbUseDefaults = $this->utilities()->boolToString($useDefaults);
+        $mdbUseDefaults = $this->adldap->utilities()->boolToString($useDefaults);
         
         $attributes = array(
             'exchange_homemdb'=>$container.",".$baseDn,
