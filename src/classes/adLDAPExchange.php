@@ -55,7 +55,7 @@ class adLDAPExchange {
     * Create an Exchange account
     * 
     * @param string $username The username of the user to add the Exchange account to
-    * @param array $storagegroup The mailbox, Exchange Storage Group, for the user account, this must be a full CN
+    * @param array $storageGroup The mailbox, Exchange Storage Group, for the user account, this must be a full CN
     *                            If the storage group has a different base_dn to the adLDAP configuration, set it using $base_dn
     * @param string $emailaddress The primary email address to add to this user
     * @param string $mailnickname The mail nick name.  If mail nickname is blank, the username will be used
