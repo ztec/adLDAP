@@ -10,6 +10,7 @@ CHANGELOG
 
 Version 4.0.4
 -------------
+[-] Feature Change: Changed $adldap->user()->getLastLogon from using the lastLogin attribute to lastLogonTimestamp. The difference between the two is detailed here http://blogs.technet.com/b/askds/archive/2009/04/15/the-lastlogontimestamp-attribute-what-it-was-designed-for-and-how-it-works.aspx
 [-] Bug Fix: $adldap->user()->getLastLogon('mySAMAccountName') produced a PHP error 'Non-static method adLDAPUtils::convertWindowsTimeToUnixTime() should not be called statically'
 [-] Bug Fix: #29 $includeDescription broken in adLDAPContacts->all()
 [-] Bug Fix: #25 exchange->createMailbox typo in $storageGroup variable null checking

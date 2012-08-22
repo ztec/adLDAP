@@ -673,11 +673,10 @@ class adLDAPUsers {
     public function getLastLogon($username) {
         if (!$this->adldap->getLdapBind()) { return false; }
         if ($username === null) { return "Missing compulsory field [username]"; }
-        $userInfo = $this->info($username, array("lastLogon"));
-        $lastLogon = adLDAPUtils::convertWindowsTimeToUnixTime($userInfo[0]['lastlogon'][0]);
+        $userInfo = $this->info($username, array("lastLogonTimestamp"));
+        $lastLogon = adLDAPUtils::convertWindowsTimeToUnixTime($userInfo[0]['lastLogonTimestamp'][0]);
         return $lastLogon;
     }
-    
     
 }
 ?>
