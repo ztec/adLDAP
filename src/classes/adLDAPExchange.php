@@ -69,7 +69,7 @@ class adLDAPExchange {
         if ($username === NULL){ return "Missing compulsory field [username]"; }     
         if ($storageGroup === NULL) { return "Missing compulsory array [storagegroup]"; }
         if (!is_array($storageGroup)) { return "[storagegroup] must be an array"; }
-        if ($emailaddress === NULL) { return "Missing compulsory field [emailaddress]"; }
+        if ($emailAddress === NULL) { return "Missing compulsory field [emailAddress]"; }
         
         if ($baseDn === NULL) {
             $baseDn = $this->adldap->getBaseDn();   
