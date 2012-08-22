@@ -116,5 +116,22 @@ abstract class adLDAPCollection
     * @return bool
     */
     abstract public function __set($attribute, $value);
+    
+    /** 
+    * Magic isset method to check for the existence of an attribute 
+    * 
+    * @param string $attribute 
+    * @return bool 
+    */ 
+    public function __isset($attribute) {
+        if (isset($this->info[0]) && is_array($this->info[0])) { 
+            foreach ($this->info[0] as $keyAttr => $valueAttr) { 
+                if (strtolower($keyAttr) == strtolower($attribute)) { 
+                    return true; 
+                } 
+            } 
+        } 
+        return false; 
+     } 
 }
 ?>

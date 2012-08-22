@@ -11,6 +11,7 @@ CHANGELOG
 Version 4.0.4
 -------------
 [+] New Feature: Ability to delete a group $adldap->group()->delete($groupName);
+[+] New Feature: #30 Add magic __isset method to adLDAPCollection
 [-] Feature Change: #34 A better recursiveGroups() implementation
 [-] Feature Change: Changed $adldap->user()->getLastLogon from using the lastLogin attribute to lastLogonTimestamp. The difference between the two is detailed here http://blogs.technet.com/b/askds/archive/2009/04/15/the-lastlogontimestamp-attribute-what-it-was-designed-for-and-how-it-works.aspx
 [-] Bug Fix: $adldap->user()->getLastLogon('mySAMAccountName') produced a PHP error 'Non-static method adLDAPUtils::convertWindowsTimeToUnixTime() should not be called statically'
