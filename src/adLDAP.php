@@ -677,7 +677,9 @@ class adLDAP {
     * @return void
     */
     public function close() {
-        ldap_close($this->ldapConnection);
+        if ($this->ldapConnection) {
+            @ldap_close($this->ldapConnection);
+        }
     }
     
     /**

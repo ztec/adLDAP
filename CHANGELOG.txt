@@ -20,6 +20,7 @@ Version 4.0.4
 [-] Bug Fix: Typo in $adldap->contact()->contactMailEnable() for email address so that the function wouldn't work as intended
 [-] Bug Fix: $adldap->folder->create() typo would have failed to create the folder correctly
 [-] Bug Fix: Some uninitialized variable warnings quashed for PHP Strict Mode
+[-] Bug Fix: Ensure a connection is established before calling ldap_close in __destruct()
 
 Version 4.0.3
 -------------
