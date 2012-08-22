@@ -183,6 +183,25 @@ class adLDAPGroups {
         }
         return true;
     }
+    
+    /**
+    * Delete a group account 
+    * 
+    * @param string $group The group to delete (please be careful here!) 
+    * 
+    * @return array 
+    */
+    public function delete($group) {
+        if (!$this->adldap->getLdapBind()){ return false; }
+        if ($group === null){ return "Missing compulsory field [group]"; }
+        
+        $groupInfo = $this->info($group, array("*"));
+        $dn = $groupInfo[0]['distinguishedname'][0]; 
+        $result = $this->adldap->folder()->delete($dn); 
+        if ($result !== true) { 
+            return false; 
+        } return true;   
+    }
 
     /**
     * Remove a group from a group
