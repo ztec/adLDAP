@@ -23,6 +23,7 @@ Version 4.0.4
 [-] Bug Fix: $adldap->folder->create() typo would have failed to create the folder correctly
 [-] Bug Fix: Some uninitialized variable warnings quashed for PHP Strict Mode
 [-] Bug Fix: Ensure a connection is established before calling ldap_close in __destruct()
+[-] Bug Fix: #32 undefined offset in getPrimaryGroup()
 
 Version 4.0.3
 -------------

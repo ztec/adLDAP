@@ -574,7 +574,7 @@ class adLDAPGroups {
     * 
     * @param string $gid Group ID
     * @param string $usersid User's Object SID
-    * @return string
+    * @return mixed
     */
     public function getPrimaryGroup($gid, $usersid)
     {
@@ -587,7 +587,10 @@ class adLDAPGroups {
         $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
         $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
 
-        return $entries[0]['distinguishedname'][0];
+        if (isset($entries[0]['distinguishedname'][0])) {
+            return $entries[0]['distinguishedname'][0];
+        }
+        return false;
      }
      
      /**
