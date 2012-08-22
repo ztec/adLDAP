@@ -286,7 +286,7 @@ class adLDAPContacts {
     * @return bool
     */
     public function contactMailEnable($distinguishedName, $emailAddress, $mailNickname = NULL){
-        return $this->adldap->exchange()->contactMailEnable($distinguishedName, $emailAddres, $mailNickname);
+        return $this->adldap->exchange()->contactMailEnable($distinguishedName, $emailAddress, $mailNickname);
     }
     
     

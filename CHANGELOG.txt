@@ -16,6 +16,7 @@ Version 4.0.4
 [-] Bug Fix: #25 exchange->createMailbox typo in $storageGroup variable null checking
 [-] Bug Fix: #25 exchange->createMailbox Call to undefined method adLDAPExchange::utilities()
 [-] Bug Fix: #27 Case mismatch on an array key in the folder()->create()
+[-] Bug Fix: Typo in $adldap->contact()->contactMailEnable() for email address so that the function wouldn't work as intended
 
 Version 4.0.3
 -------------
