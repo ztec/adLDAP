@@ -458,23 +458,31 @@ class adLDAPGroups {
     {
         if ($group === NULL) { return false; }
 
-        $retGroups = array();          
-        
-        $groups = $this->info($group, array("memberof"));
-        if (isset($groups[0]["memberof"]) && is_array($groups[0]["memberof"])) {
-            $groups = $groups[0]["memberof"];
-
-            if ($groups) {
-                $groupNames = $this->adldap->utilities()->niceNames($groups);
-                $retGroups = array_merge($retGroups, $groupNames); //final groups to return
-                
-                foreach ($groupNames as $id => $groupName){
-                    $childGroups = $this->recursiveGroups($groupName);
-                    $retGroups = array_merge($retGroups, $childGroups);
+        $stack = array(); 
+        $processed = array(); 
+        $retGroups = array(); 
+     
+        array_push($stack, $group); // Initial Group to Start with 
+        while (count($stack) > 0) {
+            $parent = array_pop($stack);
+            array_push($processed, $parent);
+            
+            $info = $this->info($parent, array("memberof"));
+            
+            if (isset($info[0]["memberof"]) && is_array($info[0]["memberof"])) {
+                $groups = $info[0]["memberof"]; 
+                if ($groups) {
+                    $groupNames = $this->adldap->utilities()->niceNames($groups);  
+                    $retGroups = array_merge($retGroups, $groupNames); //final groups to return
+                    foreach ($groupNames as $id => $groupName) { 
+                        if (!in_array($groupName, $processed)) {
+                            array_push($stack, $groupName);
+                        }
+                    }
                 }
             }
         }
-
+        
         return $retGroups;
     }
     
