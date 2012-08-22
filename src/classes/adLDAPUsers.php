@@ -614,7 +614,7 @@ class adLDAPUsers {
             $searchParams = "(" . $searchField . "=" . $searchFilter . ")";
         }                           
         $filter = "(&(objectClass=user)(samaccounttype=" . adLDAP::ADLDAP_NORMAL_ACCOUNT .")(objectCategory=person)" . $searchParams . ")";
-        $fields=array("samaccountname","displayname");
+        $fields = array("samaccountname","displayname");
         $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
         $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
 
