@@ -70,10 +70,10 @@ class adLDAPFolders {
     * Returns a folder listing for a specific OU
     * See http://adldap.sourceforge.net/wiki/doku.php?id=api_folder_functions
     * 
-    * @param array $folder_name An array to the OU you wish to list. 
+    * @param array $folderName An array to the OU you wish to list. 
     *                           If set to NULL will list the root, strongly recommended to set 
     *                           $recursive to false in that instance!
-    * @param string $dn_type The type of record to list.  This can be ADLDAP_FOLDER or ADLDAP_CONTAINER.
+    * @param string $dnType The type of record to list.  This can be ADLDAP_FOLDER or ADLDAP_CONTAINER.
     * @param bool $recursive Recursively search sub folders
     * @param bool $type Specify a type of object to search for
     * @return array
