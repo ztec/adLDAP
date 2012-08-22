@@ -393,10 +393,10 @@ class adLDAPGroups {
                 continue; 
              } 
 
-             if ((!isset($entries[0]['samaccountname'][0]) || $entries[0]['samaccountname'][0] === NULL) && $entries[0]['distinguishedname'][0] !== NULL) { ) {
+             if ((!isset($entries[0]['samaccountname'][0]) || $entries[0]['samaccountname'][0] === NULL) && $entries[0]['distinguishedname'][0] !== NULL) {
                  $userArray[] = $entries[0]['distinguishedname'][0];
              }
-             elseif ($entries[0]['samaccountname'][0] !== NULL) {
+             else if ($entries[0]['samaccountname'][0] !== NULL) {
                 $userArray[] = $entries[0]['samaccountname'][0];
              }
         }
