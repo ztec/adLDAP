@@ -552,7 +552,7 @@ class adLDAPGroups {
     public function getPrimaryGroup($gid, $usersid)
     {
         if ($gid === NULL || $usersid === NULL) { return false; }
-        $r = false;
+        $sr = false;
 
         $gsid = substr_replace($usersid, pack('V',$gid), strlen($usersid)-4,4);
         $filter = '(objectsid=' . $this->adldap->utilities()->getTextSID($gsid).')';
@@ -577,7 +577,8 @@ class adLDAPGroups {
     */
     public function cn($gid){    
         if ($gid === NULL) { return false; }
-        $r = false;
+        $sr = false;
+        $r = '';
         
         $filter = "(&(objectCategory=group)(samaccounttype=" . adLDAP::ADLDAP_SECURITY_GLOBAL_GROUP . "))";
         $fields = array("primarygrouptoken", "samaccountname", "distinguishedname");
