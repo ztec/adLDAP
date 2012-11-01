@@ -1,5 +1,5 @@
 {
-    "name": "adLDAP/adLDAP",
+    "name": "adldap/adldap",
     "type": "library",
     "description": "adLDAP, low-level library to query Active directory",
     "keywords": ["active directory","ldap","windows"],
@@ -15,7 +15,9 @@
         "php": ">=5.2.4"
     },
     "autoload": {
-        "files": ["lib/swift_required.php"]
+        "psr-0" : {
+            "adLDAP" : "lib/"
+        }
     },
     "extra": {
         "branch-alias": {
