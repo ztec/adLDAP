@@ -1,4 +1,6 @@
 <?php
+namespace adLDAP\classes ;
+use adLDAP\adLDAP ;
 /**
  * PHP LDAP CLASS FOR MANIPULATING ACTIVE DIRECTORY 
  * Version 4.0.4
@@ -90,7 +92,7 @@ class adLDAPComputers {
         $info = $this->info($computerName, $fields);
         
         if ($info !== false) {
-            $collection = new adLDAPComputerCollection($info, $this->adldap);
+            $collection = new \adLDAP\collections\adLDAPComputerCollection($info, $this->adldap);
             return $collection;
         }
         return false;

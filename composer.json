@@ -1,0 +1,25 @@
+{
+    "name": "adLDAP/adLDAP",
+    "type": "library",
+    "description": "adLDAP, low-level library to query Active directory",
+    "keywords": ["active directory","ldap","windows"],
+    "homepage": "http://adldap.sourceforge.net",
+    "license": "GNU",
+    "authors": [
+        {
+            "name": "Richard Hyland",
+            "email": ""
+        }
+    ],
+    "require": {
+        "php": ">=5.2.4"
+    },
+    "autoload": {
+        "files": ["lib/swift_required.php"]
+    },
+    "extra": {
+        "branch-alias": {
+            "v4": "4"
+        }
+    }
+}
