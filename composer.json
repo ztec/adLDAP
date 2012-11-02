@@ -12,16 +12,12 @@
         }
     ],
     "require": {
-        "php": ">=5.2.4"
+        "php": ">=5.2.4",
+        "ext-ldap": "*"
     },
     "autoload": {
         "psr-0" : {
             "adLDAP" : "lib/"
-        }
-    },
-    "extra": {
-        "branch-alias": {
-            "v4.0.1": "4.0.1"
         }
     }
 }
