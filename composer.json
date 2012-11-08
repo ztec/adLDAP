@@ -7,8 +7,7 @@
     "license": "GNU",
     "authors": [
         {
-            "name": "Richard Hyland",
-            "email": ""
+            "name": "Richard Hyland"
         }
     ],
     "require": {
