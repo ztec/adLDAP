@@ -11,7 +11,9 @@
         }
     ],
     "require": {
-        "php": ">=5.2.4",
+        "php": ">=5.2.4"
+    },
+    "suggest": {
         "ext-ldap": "*"
     },
     "autoload": {
