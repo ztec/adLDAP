@@ -422,7 +422,9 @@ class adLDAPGroups {
             $groupName = stripslashes($groupName);   
         }
         
-        $filter = "(&(objectCategory=group)(name=" . $this->adldap->utilities()->ldapSlashes($groupName) . "))";
+        $filter = "(&(objectCategory=group)";
+        $filter .= "(|(samaccountname=".$this->adldap->utilities()->ldapSlashes($groupName).")";
+        $filter .= "(name=".$this->adldap->utilities()->ldapSlashes($groupName).")))";
         if ($fields === null) {
             $fields = array("member","memberof","cn","description","distinguishedname","objectcategory","samaccountname"); 
         }
