@@ -80,7 +80,7 @@ class adLDAPUsers {
         if (!array_key_exists("username", $attributes)){ return "Missing compulsory field [username]"; }
         if (!array_key_exists("firstname", $attributes)){ return "Missing compulsory field [firstname]"; }
         if (!array_key_exists("surname", $attributes)){ return "Missing compulsory field [surname]"; }
-        if (!array_key_exists("email", $attributes)){ return "Missing compulsory field [email]"; }
+		//if (!array_key_exists("email", $attributes)){ return "Missing compulsory field [email]"; }
         if (!array_key_exists("container", $attributes)){ return "Missing compulsory field [container]"; }
         if (!is_array($attributes["container"])){ return "Container attribute must be an array."; }
 
@@ -89,7 +89,8 @@ class adLDAPUsers {
         }
 
         if (!array_key_exists("display_name", $attributes)) { 
-            $attributes["display_name"] = $attributes["firstname"] . " " . $attributes["surname"]; 
+			$initials = array_key_exists("initials", $attributes) ? $attributes["initials"][0] : "";
+            $attributes["display_name"] = $this->adldap->formatUserDisplay($attributes["firstname"], $attributes["surname"], $initials); 
         }
 
         // Translate the schema
@@ -106,17 +107,18 @@ class adLDAPUsers {
 
         // Set the account control attribute
         $control_options = array("NORMAL_ACCOUNT");
-        if (!$attributes["enabled"]) { 
+        if (!isset($attributes["enabled"]) || $attributes["enabled"] == false) { 
             $control_options[] = "ACCOUNTDISABLE"; 
         }
         $add["userAccountControl"][0] = $this->accountControl($control_options);
         
-        // Determine the container
+        // Determine the container and DN
         $attributes["container"] = array_reverse($attributes["container"]);
         $container = "OU=" . implode(", OU=",$attributes["container"]);
-
+		$dn = "CN=" . str_replace(',', '\,', $add["cn"][0]) . "," . $container . "," . $this->adldap->getBaseDn();
+		
         // Add the entry
-        $result = @ldap_add($this->adldap->getLdapConnection(), "CN=" . $add["cn"][0] . ", " . $container . "," . $this->adldap->getBaseDn(), $add);
+        $result = @ldap_add($this->adldap->getLdapConnection(), $dn, $add);
         if ($result != true) {
             return false;
         }
@@ -422,7 +424,19 @@ class adLDAPUsers {
             }
             $mod["userAccountControl"][0] = $this->accountControl($controlOptions);
         }
-
+		
+		// If the common name needs to be modified, so does the RDN, thus a rename is called.
+		if (isset($mod["cn"][0])) {
+			$container = substr($userDn, strpos($userDn, ',OU') + 1); // Grab OU
+			$newRdn = 'CN=' . str_replace(',', '\,', $mod["cn"][0]); // Only the first part is required.
+			$result = @ldap_rename($this->adldap->getLdapConnection(), $userDn, $newRdn, $container, true);
+			$userDn = $newRdn . ',' . $container; // Re-set this so we can modify other attributes.
+			if ($result == false) { // Stop if the rename failed.
+				return false;
+			}
+			unset($mod["cn"]); // CN cannot be modified.
+		}
+		
         // Do the update
         $result = @ldap_modify($this->adldap->getLdapConnection(), $userDn, $mod);
         if ($result == false) {
@@ -561,7 +575,7 @@ class adLDAPUsers {
 
         $usersArray = array();
         for ($i=0; $i<$entries["count"]; $i++){
-            if ($includeDescription && strlen($entries[$i]["displayname"][0])>0){
+            if ($includeDescription && isset($entries[$i]["displayname"][0]) && strlen($entries[$i]["displayname"][0])>0){
                 $usersArray[$entries[$i]["samaccountname"][0]] = $entries[$i]["displayname"][0];
             } elseif ($includeDescription){
                 $usersArray[$entries[$i]["samaccountname"][0]] = $entries[$i]["samaccountname"][0];
