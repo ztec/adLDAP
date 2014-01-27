@@ -89,7 +89,8 @@ class adLDAPUsers {
         }
 
         if (!array_key_exists("display_name", $attributes)) { 
-            $attributes["display_name"] = $attributes["firstname"] . " " . $attributes["surname"]; 
+			$initials = array_key_exists("initials", $attributes) ? $attributes["initials"][0] : "";
+            $attributes["display_name"] = $this->adldap->formatUserDisplay($attributes["firstname"], $attributes["surname"], $initials); 
         }
 
         // Translate the schema

@@ -95,6 +95,15 @@ class adLDAP {
     * @var string
     */
 	protected $baseDn = "DC=mydomain,DC=local"; 
+	
+	/**
+	 * Edit the display name
+	 * 
+	 * Similar to modifying the CN=user-Display display specifier.
+	 * 
+	 * @var string 
+	 */
+	protected $userDisplay = "%<givenName> %<initials> %<sn>";
     
     /** 
     * Port used to talk to the domain controllers. 
@@ -364,6 +373,26 @@ class adLDAP {
           return $this->accountSuffix;
     }
     
+	/**
+	 * Get user display string
+	 * @return string
+	 */
+	public function getUserDisplay()
+	{
+		return $this->userDisplay;
+	}
+	
+	/**
+	 * Set user display string
+	 * @param string $userDisplay
+	 * @return void
+	 */
+	public function setUserDisplay($userDisplay)
+	{
+		$this->userDisplay = $userDisplay;
+	}
+	
+	
     /**
     * Set the domain controllers array
     * 
@@ -596,6 +625,7 @@ class adLDAP {
                     $this->setUseSSO(false);
                 }
             } 
+			if (array_key_exists("user_display",$options)){	$this->userDisplay = $options["user_display"];	}
         }
         
         if ($this->ldapSupported() === false) {
@@ -862,13 +892,26 @@ class adLDAP {
         
 		// If the first name or surname need to be modified, then so do the cn and display name.
         if (isset($attributes["firstname"]) || isset($attributes["surname"])){
-			$mod["cn"][0] = $attributes["surname"] . ', ' . $attributes["firstname"];
-			$mod["displayname"][0] =  $attributes["surname"] . ', ' . $attributes["firstname"];
+			$initials = isset($attributes["initials"]) ? $attributes["initials"] : '';
+			$mod["cn"][0] = $this->formatUserDisplay($attributes["firstname"], $attributes["surname"], $initials);
+			$mod["displayname"][0] =  $this->formatUserDisplay($attributes["firstname"], $attributes["surname"], $initials);
         }
 
         if (count($mod)==0){ return (false); }
         return ($mod);
     }
+	
+	public function formatUserDisplay($firstName, $lastName, $initials = '')
+	{
+		// %<givenName> %<initials> %<sn>
+		$userDisplay = $this->userDisplay;
+		$userDisplay = str_replace('%<givenName>', $firstName, $userDisplay);
+		$userDisplay = str_replace('%<sn>', $lastName, $userDisplay);
+		$userDisplay = str_replace('%<initials>', $initials, $userDisplay);
+		$userDisplay = str_replace('  ', ' ', $userDisplay); // To avoid unintentional double spaces that may occur in formatting
+		
+		return trim($userDisplay);
+	}
     
     /**
     * Convert 8bit characters e.g. accented characters to UTF8 encoded characters
