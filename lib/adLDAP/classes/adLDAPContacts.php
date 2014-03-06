@@ -71,7 +71,7 @@ class adLDAPContacts {
         if (!is_array($attributes["container"])) { return "Container attribute must be an array."; }
 
         // Translate the schema
-        $add = $this->adldap->adldap_schema($attributes);
+        list($add, ) = $this->adldap->adldap_schema($attributes);
         
         // Additional stuff only used for adding contacts
         $add["cn"][0] = $attributes["display_name"];
@@ -217,15 +217,25 @@ class adLDAPContacts {
         $mod = $this->adldap->adldap_schema($attributes);
         
         // Check to see if this is an enabled status update
-        if (!$mod) { 
+        if (!$mod && !$del) { 
             return false;
-        }
+		}
+
+		// Do the Delete updates
+		if ($del) {
+			$result = @ldap_mod_del($this->adldap->getLdapConnection(), $distinguishedName, $del);
+			if ($result == false) {
+				return false;
+			}	
+		}
         
-        // Do the update
-        $result = ldap_modify($this->adldap->getLdapConnection(), $distinguishedName, $mod);
-        if ($result == false) {
-            return false;
-        }
+		// Do the update
+		if ($mod) {
+	        $result = ldap_modify($this->adldap->getLdapConnection(), $distinguishedName, $mod);
+		    if ($result == false) {
+			    return false;
+	        }
+		}
         
         return true;
     }

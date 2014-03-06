@@ -799,66 +799,64 @@ class adLDAP {
     public function adldap_schema($attributes){
     
         // LDAP doesn't like NULL attributes, only set them if they have values
-        // If you wish to remove an attribute you should set it to a space
-        // TO DO: Adapt user_modify to use ldap_mod_delete to remove a NULL attribute
         $mod=array();
         
         // Check every attribute to see if it contains 8bit characters and then UTF8 encode them
         array_walk($attributes, array($this, 'encode8bit'));
 
-        if ($attributes["address_city"]){ $mod["l"][0]=$attributes["address_city"]; }
-        if ($attributes["address_code"]){ $mod["postalCode"][0]=$attributes["address_code"]; }
-        //if ($attributes["address_country"]){ $mod["countryCode"][0]=$attributes["address_country"]; } // use country codes?
-        if ($attributes["address_country"]){ $mod["c"][0]=$attributes["address_country"]; }
-        if ($attributes["address_pobox"]){ $mod["postOfficeBox"][0]=$attributes["address_pobox"]; }
-        if ($attributes["address_state"]){ $mod["st"][0]=$attributes["address_state"]; }
-        if ($attributes["address_street"]){ $mod["streetAddress"][0]=$attributes["address_street"]; }
-        if ($attributes["company"]){ $mod["company"][0]=$attributes["company"]; }
-        if ($attributes["change_password"]){ $mod["pwdLastSet"][0]=0; }
-        if ($attributes["department"]){ $mod["department"][0]=$attributes["department"]; }
-        if ($attributes["description"]){ $mod["description"][0]=$attributes["description"]; }
-        if ($attributes["display_name"]){ $mod["displayName"][0]=$attributes["display_name"]; }
-        if ($attributes["email"]){ $mod["mail"][0]=$attributes["email"]; }
-        if ($attributes["expires"]){ $mod["accountExpires"][0]=$attributes["expires"]; } //unix epoch format?
-        if ($attributes["firstname"]){ $mod["givenName"][0]=$attributes["firstname"]; }
-        if ($attributes["home_directory"]){ $mod["homeDirectory"][0]=$attributes["home_directory"]; }
-        if ($attributes["home_drive"]){ $mod["homeDrive"][0]=$attributes["home_drive"]; }
-        if ($attributes["initials"]){ $mod["initials"][0]=$attributes["initials"]; }
-        if ($attributes["logon_name"]){ $mod["userPrincipalName"][0]=$attributes["logon_name"]; }
-        if ($attributes["manager"]){ $mod["manager"][0]=$attributes["manager"]; }  //UNTESTED ***Use DistinguishedName***
-        if ($attributes["office"]){ $mod["physicalDeliveryOfficeName"][0]=$attributes["office"]; }
-        if ($attributes["password"]){ $mod["unicodePwd"][0]=$this->user()->encodePassword($attributes["password"]); }
-        if ($attributes["profile_path"]){ $mod["profilepath"][0]=$attributes["profile_path"]; }
-        if ($attributes["script_path"]){ $mod["scriptPath"][0]=$attributes["script_path"]; }
-        if ($attributes["surname"]){ $mod["sn"][0]=$attributes["surname"]; }
-        if ($attributes["title"]){ $mod["title"][0]=$attributes["title"]; }
-        if ($attributes["telephone"]){ $mod["telephoneNumber"][0]=$attributes["telephone"]; }
-        if ($attributes["mobile"]){ $mod["mobile"][0]=$attributes["mobile"]; }
-        if ($attributes["pager"]){ $mod["pager"][0]=$attributes["pager"]; }
-        if ($attributes["ipphone"]){ $mod["ipphone"][0]=$attributes["ipphone"]; }
-        if ($attributes["web_page"]){ $mod["wWWHomePage"][0]=$attributes["web_page"]; }
-        if ($attributes["fax"]){ $mod["facsimileTelephoneNumber"][0]=$attributes["fax"]; }
-        if ($attributes["enabled"]){ $mod["userAccountControl"][0]=$attributes["enabled"]; }
-        if ($attributes["homephone"]){ $mod["homephone"][0]=$attributes["homephone"]; }
+        if (array_key_exists("address_city", $attributes)){ $mod["l"][0]=$attributes["address_city"]; }
+        if (array_key_exists("address_code", $attributes)){ $mod["postalCode"][0]=$attributes["address_code"]; }
+        //if (array_key_exists("address_country", $attributes)){ $mod["countryCode"][0]=$attributes["address_country"]; } // use country codes?
+        if (array_key_exists("address_country", $attributes)){ $mod["c"][0]=$attributes["address_country"]; }
+        if (array_key_exists("address_pobox", $attributes)){ $mod["postOfficeBox"][0]=$attributes["address_pobox"]; }
+        if (array_key_exists("address_state", $attributes)){ $mod["st"][0]=$attributes["address_state"]; }
+        if (array_key_exists("address_street", $attributes)){ $mod["streetAddress"][0]=$attributes["address_street"]; }
+        if (array_key_exists("company", $attributes)){ $mod["company"][0]=$attributes["company"]; }
+        if (array_key_exists("change_password", $attributes)){ $mod["pwdLastSet"][0]=0; }
+        if (array_key_exists("department", $attributes)){ $mod["department"][0]=$attributes["department"]; }
+        if (array_key_exists("description", $attributes)){ $mod["description"][0]=$attributes["description"]; }
+        if (array_key_exists("display_name", $attributes)){ $mod["displayName"][0]=$attributes["display_name"]; }
+        if (array_key_exists("email", $attributes)){ $mod["mail"][0]=$attributes["email"]; }
+        if (array_key_exists("expires", $attributes)){ $mod["accountExpires"][0]=$attributes["expires"]; } //unix epoch format?
+        if (array_key_exists("firstname", $attributes)){ $mod["givenName"][0]=$attributes["firstname"]; }
+        if (array_key_exists("home_directory", $attributes)){ $mod["homeDirectory"][0]=$attributes["home_directory"]; }
+        if (array_key_exists("home_drive", $attributes)){ $mod["homeDrive"][0]=$attributes["home_drive"]; }
+        if (array_key_exists("initials", $attributes)){ $mod["initials"][0]=$attributes["initials"]; }
+        if (array_key_exists("logon_name", $attributes)){ $mod["userPrincipalName"][0]=$attributes["logon_name"]; }
+        if (array_key_exists("manager", $attributes)){ $mod["manager"][0]=$attributes["manager"]; }  //UNTESTED ***Use DistinguishedName***
+        if (array_key_exists("office", $attributes)){ $mod["physicalDeliveryOfficeName"][0]=$attributes["office"]; }
+        if (array_key_exists("password", $attributes)){ $mod["unicodePwd"][0]=$this->user()->encodePassword($attributes["password"]); }
+        if (array_key_exists("profile_path", $attributes)){ $mod["profilepath"][0]=$attributes["profile_path"]; }
+        if (array_key_exists("script_path", $attributes)){ $mod["scriptPath"][0]=$attributes["script_path"]; }
+        if (array_key_exists("surname", $attributes)){ $mod["sn"][0]=$attributes["surname"]; }
+        if (array_key_exists("title", $attributes)){ $mod["title"][0]=$attributes["title"]; }
+        if (array_key_exists("telephone", $attributes)){ $mod["telephoneNumber"][0]=$attributes["telephone"]; }
+        if (array_key_exists("mobile", $attributes)){ $mod["mobile"][0]=$attributes["mobile"]; }
+        if (array_key_exists("pager", $attributes)){ $mod["pager"][0]=$attributes["pager"]; }
+        if (array_key_exists("ipphone", $attributes)){ $mod["ipphone"][0]=$attributes["ipphone"]; }
+        if (array_key_exists("web_page", $attributes)){ $mod["wWWHomePage"][0]=$attributes["web_page"]; }
+        if (array_key_exists("fax", $attributes)){ $mod["facsimileTelephoneNumber"][0]=$attributes["fax"]; }
+        if (array_key_exists("enabled", $attributes)){ $mod["userAccountControl"][0]=$attributes["enabled"]; }
+        if (array_key_exists("homephone", $attributes)){ $mod["homephone"][0]=$attributes["homephone"]; }
         
         // Distribution List specific schema
-        if ($attributes["group_sendpermission"]){ $mod["dlMemSubmitPerms"][0]=$attributes["group_sendpermission"]; }
-        if ($attributes["group_rejectpermission"]){ $mod["dlMemRejectPerms"][0]=$attributes["group_rejectpermission"]; }
+        if (array_key_exists("group_sendpermission", $attributes)){ $mod["dlMemSubmitPerms"][0]=$attributes["group_sendpermission"]; }
+        if (array_key_exists("group_rejectpermission", $attributes)){ $mod["dlMemRejectPerms"][0]=$attributes["group_rejectpermission"]; }
         
         // Exchange Schema
-        if ($attributes["exchange_homemdb"]){ $mod["homeMDB"][0]=$attributes["exchange_homemdb"]; }
-        if ($attributes["exchange_mailnickname"]){ $mod["mailNickname"][0]=$attributes["exchange_mailnickname"]; }
-        if ($attributes["exchange_proxyaddress"]){ $mod["proxyAddresses"][0]=$attributes["exchange_proxyaddress"]; }
-        if ($attributes["exchange_usedefaults"]){ $mod["mDBUseDefaults"][0]=$attributes["exchange_usedefaults"]; }
-        if ($attributes["exchange_policyexclude"]){ $mod["msExchPoliciesExcluded"][0]=$attributes["exchange_policyexclude"]; }
-        if ($attributes["exchange_policyinclude"]){ $mod["msExchPoliciesIncluded"][0]=$attributes["exchange_policyinclude"]; }       
-        if ($attributes["exchange_addressbook"]){ $mod["showInAddressBook"][0]=$attributes["exchange_addressbook"]; }    
-        if ($attributes["exchange_altrecipient"]){ $mod["altRecipient"][0]=$attributes["exchange_altrecipient"]; } 
-        if ($attributes["exchange_deliverandredirect"]){ $mod["deliverAndRedirect"][0]=$attributes["exchange_deliverandredirect"]; }    
+        if (array_key_exists("exchange_homemdb", $attributes)){ $mod["homeMDB"][0]=$attributes["exchange_homemdb"]; }
+        if (array_key_exists("exchange_mailnickname", $attributes)){ $mod["mailNickname"][0]=$attributes["exchange_mailnickname"]; }
+        if (array_key_exists("exchange_proxyaddress", $attributes)){ $mod["proxyAddresses"][0]=$attributes["exchange_proxyaddress"]; }
+        if (array_key_exists("exchange_usedefaults", $attributes)){ $mod["mDBUseDefaults"][0]=$attributes["exchange_usedefaults"]; }
+        if (array_key_exists("exchange_policyexclude", $attributes)){ $mod["msExchPoliciesExcluded"][0]=$attributes["exchange_policyexclude"]; }
+        if (array_key_exists("exchange_policyinclude", $attributes)){ $mod["msExchPoliciesIncluded"][0]=$attributes["exchange_policyinclude"]; }       
+        if (array_key_exists("exchange_addressbook", $attributes)){ $mod["showInAddressBook"][0]=$attributes["exchange_addressbook"]; }    
+        if (array_key_exists("exchange_altrecipient", $attributes)){ $mod["altRecipient"][0]=$attributes["exchange_altrecipient"]; } 
+        if (array_key_exists("exchange_deliverandredirect", $attributes)){ $mod["deliverAndRedirect"][0]=$attributes["exchange_deliverandredirect"]; }    
         
         // This schema is designed for contacts
-        if ($attributes["exchange_hidefromlists"]){ $mod["msExchHideFromAddressLists"][0]=$attributes["exchange_hidefromlists"]; }
-        if ($attributes["contact_email"]){ $mod["targetAddress"][0]=$attributes["contact_email"]; }
+        if (array_key_exists("exchange_hidefromlists", $attributes)){ $mod["msExchHideFromAddressLists"][0]=$attributes["exchange_hidefromlists"]; }
+        if (array_key_exists("contact_email", $attributes)){ $mod["targetAddress"][0]=$attributes["contact_email"]; }
         
         //echo ("<pre>"); print_r($mod);
         /*
@@ -868,10 +866,21 @@ class adLDAP {
             $mod["displayname"][0]=$attributes["firstname"]." ".$attributes["surname"];
             $mod["name"][0]=$attributes["firstname"]." ".$attributes["surname"];
         }
-        */
+		*/
 
-        if (count($mod)==0){ return (false); }
-        return ($mod);
+		// Filter out attributes that are NULL so we can ldap_mod_del them 
+		// instead
+		$del = array();
+		foreach ($mod as $attribute => $value) {
+			if ($value[0] == '') {
+				$del[$attribute] = array();
+				unset($mod[$attribute]);
+			}
+		}
+
+		if (count($mod)==0){ $mod = false; }
+		if (count($del)==0){ $del = false; }
+        return (array($mod, $del));
     }
     
     /**
