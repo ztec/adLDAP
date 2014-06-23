@@ -68,25 +68,18 @@ class adLDAPUtils {
         $groupArray = array();
         for ($i=0; $i<$groups["count"]; $i++){ // For each group
             $line = $groups[$i];
-            
-            if (strlen($line)>0) { 
-                // More presumptions, they're all prefixed with CN=
-                // so we ditch the first three characters and the group
-				// name goes up to the first comma
 
-				// Assume $line is CN
-				$fields = array("samaccountname");
-				$filter = "(&(objectCategory=group)(distinguishedName=" . $this->adldap->utilities()->ldapSlashes($groups[$i]) . "))";
-				$sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
-   				$entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
+            if (strlen($line)>0) { 
+                $fields = array("samaccountname");
+                $filter = "(&(objectCategory=group)(distinguishedName=" . $this->adldap->utilities()->ldapSlashes($groups[$i]) . "))";
+                $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
+                $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
 
                 if (!isset($entries[0]['samaccountname'][0])) {
                     continue;  
                 }
 
-				$groupArray[] = $entries[0]['samaccountname'][0];
-                //$bits=explode(",", $line);
-                //$groupArray[] = substr($bits[0], 3, (strlen($bits[0])-3));
+                $groupArray[] = $entries[0]['samaccountname'][0];
             }
         }
         return $groupArray;
