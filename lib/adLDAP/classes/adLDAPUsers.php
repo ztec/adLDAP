@@ -421,23 +421,23 @@ class adLDAPUsers {
                 $controlOptions = array("NORMAL_ACCOUNT", "ACCOUNTDISABLE"); 
             }
             $mod["userAccountControl"][0] = $this->accountControl($controlOptions);
-		}
+        }
 
-		// Do the Delete updates
-		if ($del) {
-			$result = @ldap_mod_del($this->adldap->getLdapConnection(), $userDn, $del);
-			if ($result == false) {
-				return false;
-			}
-		}
+        // Do the Delete updates
+        if ($del) {
+            $result = @ldap_mod_del($this->adldap->getLdapConnection(), $userDn, $del);
+            if ($result == false) {
+                return false;
+            }
+        }
 
-		// Do the update
-		if ($mod) {
-	        $result = @ldap_modify($this->adldap->getLdapConnection(), $userDn, $mod);
-		    if ($result == false) {
-			    return false;
-	        }
-		}
+        // Do the update
+        if ($mod) {
+            $result = @ldap_modify($this->adldap->getLdapConnection(), $userDn, $mod);
+            if ($result == false) {
+                return false;
+            }
+        }
         
         return true;
     }

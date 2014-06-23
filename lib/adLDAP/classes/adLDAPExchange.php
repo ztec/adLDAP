@@ -320,21 +320,21 @@ class adLDAPExchange {
         list($mod, $del) = $this->adldap->adldap_schema($attributes);
         
         // Check to see if this is an enabled status update
-		if (!$mod && !$del) { return false; }
+        if (!$mod && !$del) { return false; }
 
-		// Do the Delete updates
-		if ($del){
-			$result = @ldap_mod_del($this->adldap->getLdapConnection(), $userDn, $del);
-			if ($result == false) {
-				return false;
-			}
-		}
+        // Do the Delete updates
+        if ($del){
+            $result = @ldap_mod_del($this->adldap->getLdapConnection(), $userDn, $del);
+            if ($result == false) {
+                return false;
+            }
+        }
         
-		// Do the update
-		if ($mod) {
-	        $result = ldap_modify($this->adldap->getLdapConnection(), $distinguishedName, $mod);
-		    if ($result == false) { return false; }
-		}
+        // Do the update
+        if ($mod) {
+            $result = ldap_modify($this->adldap->getLdapConnection(), $distinguishedName, $mod);
+            if ($result == false) { return false; }
+        }
         
         return true;
     }

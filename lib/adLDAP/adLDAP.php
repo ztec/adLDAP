@@ -85,7 +85,7 @@ class adLDAP {
     * 
     * @var string
     */   
-	protected $accountSuffix = "@mydomain.local";
+    protected $accountSuffix = "@mydomain.local";
     
     /**
     * The base dn for your domain
@@ -94,7 +94,7 @@ class adLDAP {
     * 
     * @var string
     */
-	protected $baseDn = "DC=mydomain,DC=local"; 
+    protected $baseDn = "DC=mydomain,DC=local"; 
     
     /** 
     * Port used to talk to the domain controllers. 
@@ -102,7 +102,7 @@ class adLDAP {
     * @var int 
     */ 
     protected $adPort = self::ADLDAP_LDAP_PORT; 
-	
+    
     /**
     * Array of domain controllers. Specifiy multiple controllers if you
     * would like the class to balance the LDAP queries amongst multiple servers
@@ -110,7 +110,7 @@ class adLDAP {
     * @var array
     */
     protected $domainControllers = array("dc01.mydomain.local");
-	
+    
     /**
     * Optional account with higher privileges for searching
     * This should be set to a domain admin account
@@ -118,7 +118,7 @@ class adLDAP {
     * @var string
     * @var string
     */
-	protected $adminUsername = null;
+    protected $adminUsername = null;
     protected $adminPassword = null;
     
     /**
@@ -129,15 +129,15 @@ class adLDAP {
     * 
     * @var bool
     */
-	protected $realPrimaryGroup = true;
-	
+    protected $realPrimaryGroup = true;
+    
     /**
     * Use SSL (LDAPS), your server needs to be setup, please see
     * http://adldap.sourceforge.net/wiki/doku.php?id=ldap_over_ssl
     * 
     * @var bool
     */
-	protected $useSSL = false;
+    protected $useSSL = false;
     
     /**
     * Use TLS
@@ -162,19 +162,19 @@ class adLDAP {
     * 
     * @var bool
     */
-	protected $recursiveGroups = true;
-	
-	// You should not need to edit anything below this line
-	//******************************************************************************************
-	
-	/**
+    protected $recursiveGroups = true;
+    
+    // You should not need to edit anything below this line
+    //******************************************************************************************
+    
+    /**
     * Connection and bind default variables
     * 
     * @var mixed
     * @var mixed
     */
-	protected $ldapConnection;
-	protected $ldapBind;
+    protected $ldapConnection;
+    protected $ldapBind;
     
     /**
     * Get the active LDAP Connection
@@ -866,20 +866,20 @@ class adLDAP {
             $mod["displayname"][0]=$attributes["firstname"]." ".$attributes["surname"];
             $mod["name"][0]=$attributes["firstname"]." ".$attributes["surname"];
         }
-		*/
+        */
 
-		// Filter out attributes that are NULL so we can ldap_mod_del them 
-		// instead
-		$del = array();
-		foreach ($mod as $attribute => $value) {
-			if ($value[0] == '') {
-				$del[$attribute] = array();
-				unset($mod[$attribute]);
-			}
-		}
+        // Filter out attributes that are NULL so we can ldap_mod_del them 
+        // instead
+        $del = array();
+        foreach ($mod as $attribute => $value) {
+            if ($value[0] == '') {
+                $del[$attribute] = array();
+                unset($mod[$attribute]);
+            }
+        }
 
-		if (count($mod)==0){ $mod = false; }
-		if (count($del)==0){ $del = false; }
+        if (count($mod)==0){ $mod = false; }
+        if (count($del)==0){ $del = false; }
         return (array($mod, $del));
     }
     
