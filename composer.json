@@ -1,10 +1,10 @@
 {
-    "name": "adldap/adldap",
+    "name": "suqld/adldap",
     "type": "library",
     "description": "adLDAP, low-level library to query Active directory",
     "keywords": ["active directory","ldap","windows"],
-    "homepage": "http://adldap.sourceforge.net",
-    "license": "GNU",
+    "homepage": "https://github.com/suqld/adLDAP/",
+    "license": "LGPL",
     "authors": [
         {
             "name": "Richard Hyland"
