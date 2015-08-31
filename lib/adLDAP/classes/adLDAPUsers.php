@@ -93,7 +93,7 @@ class adLDAPUsers {
         }
 
         // Translate the schema
-        $add = $this->adldap->adldap_schema($attributes);
+        list($add, ) = $this->adldap->adldap_schema($attributes);
         
         // Additional stuff only used for adding accounts
         $add["cn"][0] = $attributes["display_name"];
@@ -405,10 +405,10 @@ class adLDAPUsers {
         }
         
         // Translate the update to the LDAP schema                
-        $mod = $this->adldap->adldap_schema($attributes);
+        list ($mod, $del) = $this->adldap->adldap_schema($attributes);
         
         // Check to see if this is an enabled status update
-        if (!$mod && !array_key_exists("enabled", $attributes)){ 
+        if (!$mod && !$del && !array_key_exists("enabled", $attributes)){ 
             return false;
         }
         
@@ -423,10 +423,20 @@ class adLDAPUsers {
             $mod["userAccountControl"][0] = $this->accountControl($controlOptions);
         }
 
+        // Do the Delete updates
+        if ($del) {
+            $result = @ldap_mod_del($this->adldap->getLdapConnection(), $userDn, $del);
+            if ($result == false) {
+                return false;
+            }
+        }
+
         // Do the update
-        $result = @ldap_modify($this->adldap->getLdapConnection(), $userDn, $mod);
-        if ($result == false) {
-            return false;
+        if ($mod) {
+            $result = @ldap_modify($this->adldap->getLdapConnection(), $userDn, $mod);
+            if ($result == false) {
+                return false;
+            }
         }
         
         return true;

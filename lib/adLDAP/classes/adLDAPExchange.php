@@ -127,7 +127,7 @@ class adLDAPExchange {
         $attributes['exchange_proxyaddress'] = $proxyValue . 'c=' . $country . ';a=' . $admd . ';p=' . $pdmd . ';o=' . $org . ';s=' . $surname . ';g=' . $givenName . ';';
        
         // Translate the update to the LDAP schema                
-        $add = $this->adldap->adldap_schema($attributes);
+        list ($add,) = $this->adldap->adldap_schema($attributes);
         
         if (!$add) { return false; }
         
@@ -191,7 +191,7 @@ class adLDAPExchange {
             $attributes['exchange_proxyaddress'] = $proxyValue . $emailAddress;
             
             // Translate the update to the LDAP schema                
-            $add = $this->adldap->adldap_schema($attributes);
+            list ($add,) = $this->adldap->adldap_schema($attributes);
             
             if (!$add) { 
                 return false; 
@@ -317,14 +317,24 @@ class adLDAPExchange {
         $attributes = array("email"=>$emailAddress,"contact_email"=>"SMTP:" . $emailAddress,"exchange_proxyaddress"=>"SMTP:" . $emailAddress,"exchange_mailnickname" => $mailNickname);
          
         // Translate the update to the LDAP schema                
-        $mod = $this->adldap->adldap_schema($attributes);
+        list($mod, $del) = $this->adldap->adldap_schema($attributes);
         
         // Check to see if this is an enabled status update
-        if (!$mod) { return false; }
+        if (!$mod && !$del) { return false; }
+
+        // Do the Delete updates
+        if ($del){
+            $result = @ldap_mod_del($this->adldap->getLdapConnection(), $userDn, $del);
+            if ($result == false) {
+                return false;
+            }
+        }
         
         // Do the update
-        $result = ldap_modify($this->adldap->getLdapConnection(), $distinguishedName, $mod);
-        if ($result == false) { return false; }
+        if ($mod) {
+            $result = ldap_modify($this->adldap->getLdapConnection(), $distinguishedName, $mod);
+            if ($result == false) { return false; }
+        }
         
         return true;
     }

@@ -362,6 +362,12 @@ class adLDAPGroups {
         if ($recursive === null){ $recursive = $this->adldap->getRecursiveGroups(); } // Use the default option if they haven't set it
         // Search the directory for the members of a group
         $info = $this->info($group, array("member","cn"));
+
+        if(!array_key_exists("member", $info[0]))
+        {
+            return false;
+        }
+
         $users = $info[0]["member"];
         if (!is_array($users)) {
             return false;
@@ -422,7 +428,9 @@ class adLDAPGroups {
             $groupName = stripslashes($groupName);   
         }
         
-        $filter = "(&(objectCategory=group)(name=" . $this->adldap->utilities()->ldapSlashes($groupName) . "))";
+        $filter = "(&(objectCategory=group)";
+        $filter .= "(|(samaccountname=".$this->adldap->utilities()->ldapSlashes($groupName).")";
+        $filter .= "(name=".$this->adldap->utilities()->ldapSlashes($groupName).")))";
         if ($fields === null) {
             $fields = array("member","memberof","cn","description","distinguishedname","objectcategory","samaccountname"); 
         }
@@ -513,9 +521,9 @@ class adLDAPGroups {
         $sr = ldap_search($this->adldap->getLdapConnection(), $this->adldap->getBaseDn(), $filter, $fields);
         $entries = ldap_get_entries($this->adldap->getLdapConnection(), $sr);
 
-        $groupsArray = array();        
+        $groupsArray = array();
         for ($i=0; $i<$entries["count"]; $i++){
-            if ($includeDescription && strlen($entries[$i]["description"][0]) > 0 ) {
+            if ($includeDescription && array_key_exists("description", $entries[$i]) && ($entries[$i]["description"][0]) > 0 ) {
                 $groupsArray[$entries[$i]["samaccountname"][0]] = $entries[$i]["description"][0];
             }
             else if ($includeDescription){
